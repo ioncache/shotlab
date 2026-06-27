@@ -62,6 +62,9 @@ export function createMeticulousClient(
 
 function normalizeApiBaseUrl(baseUrl: string): string {
   const url = new URL(baseUrl);
+  if (url.search || url.hash) {
+    throw new Error('baseUrl must not include a query string or fragment');
+  }
   const pathname = url.pathname.replace(/\/+$/, '');
 
   if (pathname.endsWith('/api/v1')) {

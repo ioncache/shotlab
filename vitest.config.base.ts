@@ -14,6 +14,12 @@ export default defineConfig({
       },
     },
     exclude: ['dist/**', 'node_modules/**'],
-    include: ['src/**/*.test.ts', 'test/**/*.test.ts'],
+export default defineConfig({
+  test: {
+    coverage: {
+      include: ['src/**/*.ts'],
+      exclude: ['src/**/*.test.ts', 'test/**/*.test.ts'],
+      provider: 'v8',
+      reporter: ['text', 'json-summary', 'json'],
   },
 });
