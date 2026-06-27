@@ -2,6 +2,7 @@
   "name": "@shotlab/meticulous-client",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "description": "Reusable TypeScript client for the Meticulous Espresso Machine protocol.",
   "files": [
     "dist",
@@ -16,7 +17,7 @@
     }
   },
   "scripts": {
-    "build": "yarn clean && yarn node $(yarn bin tsc) -p tsconfig.build.json",
+    "build": "yarn clean && tsc -p tsconfig.build.json",
     "clean": "rm -rf dist coverage && find . -maxdepth 1 -name '*.tsbuildinfo' -delete",
     "format": "oxfmt",
     "format:check": "oxfmt --check",

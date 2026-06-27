@@ -10,15 +10,30 @@ The priority is to build a solid protocol implementation before expanding featur
 
 ## Phase 1 — Protocol Discovery
 
-### Phase 1 Goals
+### Phase 1 Steps
 
-- Reverse engineer the REST API
-- Reverse engineer Socket.IO
-- Identify all endpoints
-- Document payloads
-- Document events
-- Create TypeScript models
-- Build the `meticulous-client` package
+Each step should be roughly one PR or one branch/worktree of work.
+
+1. `meticulous-client` REST foundation
+   - Confirm the REST endpoints we already know about.
+   - Build the minimal `@shotlab/meticulous-client` package around `GET /machine` and `POST /action/tare`.
+   - Add the first real machine smoke test and package docs.
+2. REST endpoint expansion
+   - Discover the remaining REST endpoints.
+   - Add client methods only for confirmed endpoints.
+   - Document request/response shapes as they become known.
+3. Socket.IO discovery
+   - Reverse engineer the Socket.IO connection and event flow.
+   - Capture event names, payloads, and connection behavior.
+   - Add client support only for confirmed events.
+4. Protocol modeling
+   - Turn confirmed payloads into TypeScript types and shared models.
+   - Replace loose protocol shapes where the schema is now known.
+   - Keep compatibility with the live machine behavior already discovered.
+5. Protocol stabilization
+   - Tighten tests around the discovered surface.
+   - Fill documentation gaps in the protocol notes and package README.
+   - Verify the client is stable enough for day-to-day use.
 
 ### Phase 1 Success Criteria
 
@@ -30,14 +45,23 @@ The priority is to build a solid protocol implementation before expanding featur
 
 ## Phase 2 — Web Dashboard
 
-### Phase 2 Goals
+### Phase 2 Steps
 
-- Dashboard
-- Connection status
-- Live telemetry
-- Machine controls
-- Profile browser
-- Settings viewer
+Each step should be roughly one PR or one branch/worktree of work.
+
+1. App shell and connection state
+   - Build the dashboard shell.
+   - Show connection status and basic machine identity.
+2. Live telemetry
+   - Stream live machine state into the UI.
+   - Render the main values needed for daily use.
+3. Machine controls
+   - Add safe control surfaces for the confirmed actions.
+   - Reuse the client package rather than duplicating protocol code.
+4. Profile browser
+   - Browse stored profiles and related machine metadata.
+5. Settings viewer
+   - Show the relevant machine and app settings needed for normal operation.
 
 ### Phase 2 Success Criteria
 
@@ -47,13 +71,23 @@ The web UI can replace the official application for common daily use.
 
 ## Phase 3 — Historical Storage
 
-### Phase 3 Goals
+### Phase 3 Steps
 
-- Database
-- Automatic shot recording
-- Telemetry archival
-- Historical browsing
-- Export
+Each step should be roughly one PR or one branch/worktree of work.
+
+1. Storage foundation
+   - Choose the first durable storage layer.
+   - Add the schema or persistence primitives needed for history.
+2. Automatic shot recording
+   - Capture shot events as they happen.
+   - Store the minimum data needed to reconstruct history.
+3. Telemetry archival
+   - Persist machine telemetry over time.
+   - Keep the archival path separate from the live control path.
+4. Historical browsing
+   - Add views for past shots and telemetry records.
+5. Export
+   - Export historical data in a usable format.
 
 ### Phase 3 Success Criteria
 
@@ -63,14 +97,18 @@ Every shot is automatically recorded and viewable.
 
 ## Phase 4 — Analytics
 
-### Phase 4 Goals
+### Phase 4 Steps
 
-- Compare shots
-- Compare profiles
-- Bean statistics
-- Grinder statistics
-- Trend analysis
-- Visualizations
+Each step should be roughly one PR or one branch/worktree of work.
+
+1. Comparison views
+   - Compare shots and profiles.
+2. Core statistics
+   - Add bean and grinder statistics.
+3. Trend analysis
+   - Compute and present longer-running trends.
+4. Visualizations
+   - Add charts or other visual summaries for the tracked data.
 
 ### Phase 4 Success Criteria
 
@@ -80,13 +118,20 @@ Users can meaningfully analyze extraction history.
 
 ## Phase 5 — Experimentation
 
-### Phase 5 Goals
+### Phase 5 Steps
 
-- MCP integration
-- ML experiments
-- AI-assisted profile generation
-- Recommendation engine
-- Profile optimization
+Each step should be roughly one PR or one branch/worktree of work.
+
+1. MCP integration
+   - Expose the useful ShotLab surface through MCP.
+2. ML experiments
+   - Add experimental model-assisted workflows behind clear boundaries.
+3. AI-assisted profile generation
+   - Generate candidate profiles from existing data.
+4. Recommendation engine
+   - Suggest improvements from the recorded data and generated profiles.
+5. Profile optimization
+   - Close the loop by evaluating and refining profiles over time.
 
 ### Phase 5 Success Criteria
 

@@ -22,7 +22,8 @@
     "lint:md": "markdownlint-cli2 \"**/*.md\" \"!.yarn/**\" \"!node_modules/**\" \"!apps/**\" \"!packages/**\" \"!services/**\" \"!docs/plans/**\" \"!.remember/**\" \"!.agents/**\" \"!.codex/**\"",
     "lint:yaml": "yamllint \".yarnrc.yml\"",
     "prepare": "husky || true",
-    "test:all": "yarn workspaces foreach -A -p -v run test"
+    "test:all": "yarn workspaces foreach -A -p -v run test",
+    "test:coverage:all": "yarn workspaces foreach -A --exclude shotlab -p -v run test:coverage"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.0.2",
