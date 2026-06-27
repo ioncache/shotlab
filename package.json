@@ -1,0 +1,51 @@
+{
+  "name": "shotlab",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "services/*"
+  ],
+  "scripts": {
+    "build:all": "yarn workspaces foreach -A -p -v run build",
+    "clean:all": "yarn workspaces foreach -A -p -v run clean",
+    "format": "oxfmt . '!apps/**' '!packages/**' '!services/**'",
+    "format:all": "yarn format && yarn workspaces foreach -A -p -v run format",
+    "format:check": "oxfmt --check . '!apps/**' '!packages/**' '!services/**'",
+    "format:check:all": "yarn format:check && yarn workspaces foreach -A -p -v run format:check",
+    "lint": "oxlint -f default --ignore-pattern 'apps/**' --ignore-pattern 'packages/**' --ignore-pattern 'services/**' && yarn lint:md && yarn lint:yaml",
+    "lint:all": "yarn lint && yarn workspaces foreach -A -p -v run lint",
+    "lint:ci": "oxlint -f github --ignore-pattern 'apps/**' --ignore-pattern 'packages/**' --ignore-pattern 'services/**' && yarn lint:md && yarn lint:yaml",
+    "lint:ci:all": "yarn lint:ci && yarn workspaces foreach -A -p -v run lint:ci",
+    "lint:fix": "oxlint --fix --ignore-pattern 'apps/**' --ignore-pattern 'packages/**' --ignore-pattern 'services/**'",
+    "lint:fix:all": "yarn lint:fix && yarn workspaces foreach -A -p -v run lint:fix",
+    "lint:md": "markdownlint-cli2 \"**/*.md\" \"!.yarn/**\" \"!node_modules/**\" \"!apps/**\" \"!packages/**\" \"!services/**\" \"!docs/plans/**\" \"!.remember/**\" \"!.agents/**\" \"!.codex/**\"",
+    "lint:yaml": "yamllint \".yarnrc.yml\"",
+    "prepare": "husky || true",
+    "test:all": "yarn workspaces foreach -A -p -v run test"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.0.2",
+    "@commitlint/config-conventional": "^21.0.2",
+    "@tsconfig/node24": "^24.0.4",
+    "@types/node": "^25.9.0",
+    "@vitest/coverage-v8": "^4.1.8",
+    "github-actionlint": "^1.7.12",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.7",
+    "markdownlint-cli2": "^0.22.1",
+    "oxfmt": "^0.53.0",
+    "oxlint": "^1.68.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8",
+    "yaml-lint": "^1.7.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "volta": {
+    "node": "24.16.0",
+    "yarn": "4.15.0"
+  },
+  "packageManager": "yarn@4.15.0"
+}

@@ -1,0 +1,41 @@
+{
+  "name": "@shotlab/meticulous-client",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Reusable TypeScript client for the Meticulous Espresso Machine protocol.",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "yarn clean && yarn node $(yarn bin tsc) -p tsconfig.build.json",
+    "clean": "rm -rf dist coverage && find . -maxdepth 1 -name '*.tsbuildinfo' -delete",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "lint": "oxlint -f default",
+    "lint:ci": "oxlint -f github",
+    "lint:fix": "oxlint --fix",
+    "test": "vitest run --passWithNoTests",
+    "test:coverage": "vitest run --coverage --passWithNoTests",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.0",
+    "@vitest/coverage-v8": "^4.1.8",
+    "oxfmt": "^0.53.0",
+    "oxlint": "^1.68.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
