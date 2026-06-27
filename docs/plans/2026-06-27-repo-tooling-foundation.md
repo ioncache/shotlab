@@ -4,7 +4,7 @@
 
 **Goal:** Establish ShotLab's repo-level JavaScript/TypeScript tooling and workspace skeleton before protocol implementation begins.
 
-**Architecture:** Use Node 24 with Yarn 4 workspaces and Plug'n'Play, matching the recent `data-sanitization` tooling style. Copy shared repo config directly from `/home/ioncache/projects/personal/data-sanitization` where it applies, then adjust only project names, workspace globs, and ignore paths. Keep this pass limited to repo hygiene, config, and skeleton directories; no protocol, UI, API, database, or service implementation.
+**Architecture:** Use Node 24 with Yarn 4 workspaces and ~~Plug'n'Play~~ `node_modules`. The original plan copied the recent `data-sanitization` Plug'n'Play setup, but ShotLab now uses `nodeLinker: node-modules` because Vitest runs through Vite, and Vite warns that Yarn PnP support is no longer actively maintained. Keep this pass limited to repo hygiene, config, and skeleton directories; no protocol, UI, API, database, or service implementation.
 
 **Tech Stack:** Node 24, Yarn 4, TypeScript, Vitest, Oxc formatter/linter, markdownlint, yamllint.
 
@@ -20,7 +20,7 @@
 - Create: `.editorconfig`
 
 - [ ] Add root `package.json` with Yarn 4, Node 24, workspace globs for `apps/*`, `packages/*`, and `services/*`, and root scripts for format, lint, build, test, and clean.
-- [ ] Add `.yarnrc.yml` using `nodeLinker: pnp`, `enableScripts: true`, and `npmMinimalAgeGate: 10`.
+- [ ] Add `.yarnrc.yml` using ~~`nodeLinker: pnp`~~ `nodeLinker: node-modules`, `enableScripts: true`, and `npmMinimalAgeGate: 10`.
 - [ ] Copy `.gitignore` directly from `data-sanitization`.
 - [ ] Keep `.gitignore` coverage for Node/Yarn artifacts, build output, coverage, logs, temp files, editor files, `.env`, `.env.*`, and `.envrc`.
 - [ ] Add `.editorconfig` with UTF-8, LF, two-space indentation, trimmed trailing whitespace, and final newlines.
