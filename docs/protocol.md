@@ -50,7 +50,7 @@ Returns:
 
 ---
 
-#### Actions
+#### Suspected actions
 
 ```http
 POST /action/preheat
@@ -63,7 +63,7 @@ Status:
 
 ---
 
-#### Profiles
+#### Suspected profiles
 
 ```http
 GET /profile/list

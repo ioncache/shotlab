@@ -5,7 +5,10 @@ Reusable TypeScript client for the Meticulous Espresso Machine protocol.
 ## Usage
 
 ```ts
-import { createMeticulousClient } from '@shotlab/meticulous-client';
+import {
+  createMeticulousClient,
+  METICULOUS_ACTIONS,
+} from '@shotlab/meticulous-client';
 
 const client = createMeticulousClient({
   baseUrl: 'http://<machine-ip>:8080',
@@ -16,7 +19,7 @@ const currentHistory = await client.getCurrentHistory();
 const lastHistory = await client.getLastHistory();
 const lastProfile = await client.getLastProfile();
 await client.tare();
-await client.preheat();
+await client.triggerAction(METICULOUS_ACTIONS.PREHEAT);
 ```
 
 Implemented endpoints:

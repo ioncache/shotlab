@@ -1,19 +1,18 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { createMeticulousClient } from '../src/index';
+import { createMeticulousClient, type MeticulousClient } from '../src/index';
 import { readIntegrationConfig } from '../src/integration-config';
 
-type ReadClient = {
-  getCurrentHistory: () => Promise<Record<string, unknown>>;
-  getHistory: () => Promise<{ history: unknown[] }>;
-  getLastHistory: () => Promise<Record<string, unknown>>;
-  getLastProfile: () => Promise<Record<string, unknown>>;
-  getMachine: () => Promise<Record<string, unknown>>;
-  getProfile: (id: string) => Promise<Record<string, unknown>>;
-  getSettings: () => Promise<Record<string, unknown>>;
-  listProfiles: (options?: {
-    full?: boolean;
-  }) => Promise<Array<Record<string, unknown>>>;
-};
+type ReadClient = Pick<
+  MeticulousClient,
+  | 'getCurrentHistory'
+  | 'getHistory'
+  | 'getLastHistory'
+  | 'getLastProfile'
+  | 'getMachine'
+  | 'getProfile'
+  | 'getSettings'
+  | 'listProfiles'
+>;
 
 const integrationConfig = readIntegrationConfig();
 const describeIfConfigured =
@@ -24,7 +23,7 @@ const describeIfConfigured =
 describeIfConfigured('Meticulous REST read endpoints', () => {
   const client = createMeticulousClient({
     baseUrl: integrationConfig.baseUrl ?? 'http://127.0.0.1:8080',
-  }) as unknown as ReadClient;
+  }) as ReadClient;
   let profiles: Array<Record<string, unknown>> = [];
   let firstProfileId: string | undefined;
 

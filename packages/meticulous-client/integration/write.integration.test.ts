@@ -1,18 +1,21 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createMeticulousClient } from '../src/index';
+import {
+  createMeticulousClient,
+  METICULOUS_ACTIONS,
+  type MeticulousClient,
+} from '../src/index';
 import { readIntegrationConfig } from '../src/integration-config';
 
-type WriteClient = {
-  getSettings: () => Promise<Record<string, unknown>>;
-  listProfiles: () => Promise<Array<Record<string, unknown>>>;
-  loadProfile: (id: string) => Promise<Record<string, unknown>>;
-  preheat: () => Promise<Record<string, unknown>>;
-  tare: () => Promise<void>;
-  triggerAction: (name: string) => Promise<Record<string, unknown>>;
-  updateSettings: (
-    patch: Record<string, unknown>,
-  ) => Promise<Record<string, unknown>>;
-};
+type WriteClient = Pick<
+  MeticulousClient,
+  | 'getSettings'
+  | 'listProfiles'
+  | 'loadProfile'
+  | 'preheat'
+  | 'tare'
+  | 'triggerAction'
+  | 'updateSettings'
+>;
 
 const integrationConfig = readIntegrationConfig();
 const describeIfConfigured =
@@ -25,7 +28,7 @@ const describeIfConfigured =
 describeIfConfigured('Meticulous REST write endpoints', () => {
   const client = createMeticulousClient({
     baseUrl: integrationConfig.baseUrl ?? 'http://127.0.0.1:8080',
-  }) as unknown as WriteClient;
+  }) as WriteClient;
   let firstProfileId: string | undefined;
   let settingsPatch: Record<string, unknown> | undefined;
 
@@ -43,7 +46,7 @@ describeIfConfigured('Meticulous REST write endpoints', () => {
   // ponytail: best-effort neutral reset at the end of the write suite; tests
   // that can leave active state also stop in a finally block.
   afterAll(async () => {
-    await client.triggerAction('stop').catch(() => undefined);
+    await client.triggerAction(METICULOUS_ACTIONS.STOP).catch(() => undefined);
   });
 
   it('posts tare', async () => {
@@ -61,7 +64,9 @@ describeIfConfigured('Meticulous REST write endpoints', () => {
 
       expect(result).toEqual(expect.any(Object));
     } finally {
-      await client.triggerAction('stop').catch(() => undefined);
+      await client
+        .triggerAction(METICULOUS_ACTIONS.STOP)
+        .catch(() => undefined);
     }
   });
 
@@ -82,7 +87,9 @@ describeIfConfigured('Meticulous REST write endpoints', () => {
 
       expect(result).toEqual(expect.any(Object));
     } finally {
-      await client.triggerAction('stop').catch(() => undefined);
+      await client
+        .triggerAction(METICULOUS_ACTIONS.STOP)
+        .catch(() => undefined);
     }
   });
 });

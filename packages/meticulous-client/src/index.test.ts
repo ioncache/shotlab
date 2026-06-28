@@ -11,6 +11,14 @@ describe('MeticulousClient', () => {
     expect(meticulous).not.toHaveProperty('MeticulousClient');
   });
 
+  it('exports known machine action names', () => {
+    expect(meticulous.METICULOUS_ACTIONS).toEqual({
+      PREHEAT: 'preheat',
+      STOP: 'stop',
+      TARE: 'tare',
+    });
+  });
+
   it('fetches machine information from the normalized API base URL', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ firmware: '0.2.24-369-gd28e82a' }), {
@@ -317,11 +325,11 @@ describe('MeticulousClient', () => {
       fetch: fetchImpl,
     });
 
-    await expect(client.triggerAction('preheat')).resolves.toEqual({
+    await expect(client.triggerAction('preheat?x=1')).resolves.toEqual({
       ok: true,
     });
     expect(fetchImpl).toHaveBeenCalledWith(
-      'http://machine.local:8080/api/v1/action/preheat',
+      'http://machine.local:8080/api/v1/action/preheat%3Fx%3D1',
       { method: 'POST' },
     );
   });

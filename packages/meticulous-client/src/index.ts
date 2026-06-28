@@ -10,6 +10,16 @@ export type MachineInfo = JsonObject;
 export type HistoryResponse = JsonObject;
 export type Profile = JsonObject;
 export type Settings = JsonObject;
+export type MeticulousActionCatalog = Record<string, string>;
+export const METICULOUS_ACTIONS: MeticulousActionCatalog & {
+  readonly PREHEAT: 'preheat';
+  readonly STOP: 'stop';
+  readonly TARE: 'tare';
+} = {
+  PREHEAT: 'preheat',
+  STOP: 'stop',
+  TARE: 'tare',
+};
 
 export interface ListProfilesOptions {
   full?: boolean;
@@ -45,6 +55,10 @@ export class MeticulousHttpError extends Error {
     this.status = response.status;
     this.statusText = response.statusText;
   }
+}
+
+function actionPath(name: string): string {
+  return `action/${encodeURIComponent(name)}`;
 }
 
 export function createMeticulousClient(
@@ -99,11 +113,11 @@ export function createMeticulousClient(
       get<JsonArray>(`profile/list${listOptions?.full ? '?full=true' : ''}`),
     loadProfile: (id) =>
       get<JsonObject>(`profile/load/${encodeURIComponent(id)}`),
-    preheat: () => post<JsonObject>('action/preheat'),
+    preheat: () => post<JsonObject>(actionPath(METICULOUS_ACTIONS.PREHEAT)),
     tare: async () => {
-      await post('action/tare');
+      await post(actionPath(METICULOUS_ACTIONS.TARE));
     },
-    triggerAction: (name) => post<JsonObject>(`action/${name}`),
+    triggerAction: (name) => post<JsonObject>(actionPath(name)),
     updateSettings: (patch) => postJson<Settings>('settings', patch),
   };
 }

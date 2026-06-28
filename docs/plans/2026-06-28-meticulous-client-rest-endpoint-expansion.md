@@ -104,16 +104,25 @@ export default mergeConfig(baseConfig, {
 - [ ] **Step 4: Add read-only real-machine integration tests**
 
 ```ts
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { createMeticulousClient } from '../src/index';
+import { readIntegrationConfig } from '../src/integration-config';
 
-const baseUrl = process.env.METICULOUS_BASE_URL;
-const profileId = process.env.METICULOUS_PROFILE_ID;
-
-const describeIfConfigured = baseUrl ? describe : describe.skip;
+const integrationConfig = readIntegrationConfig();
+const describeIfConfigured =
+  integrationConfig.enabled && integrationConfig.baseUrl ? describe : describe.skip;
 
 describeIfConfigured('Meticulous REST read endpoints', () => {
-  const client = createMeticulousClient({ baseUrl: baseUrl! });
+  const client = createMeticulousClient({
+    baseUrl: integrationConfig.baseUrl ?? 'http://127.0.0.1:8080',
+  });
+  let firstProfileId: string | undefined;
+
+  beforeAll(async () => {
+    const profiles = await client.listProfiles();
+    const firstProfile = profiles[0];
+    firstProfileId = typeof firstProfile?.id === 'string' ? firstProfile.id : undefined;
+  });
 
   it('reads machine information', async () => {
     const machine = await client.getMachine();
@@ -141,15 +150,15 @@ describeIfConfigured('Meticulous REST read endpoints', () => {
     expect(Array.isArray(history.history)).toBe(true);
   });
 
-  it('reads a full profile when METICULOUS_PROFILE_ID is set', async () => {
-    if (!profileId) {
+  it('reads a full profile when the machine returns a profile id', async () => {
+    if (!firstProfileId) {
       return;
     }
 
-    const profile = await client.getProfile(profileId);
+    const profile = await client.getProfile(firstProfileId);
 
     expect(profile).toEqual(expect.any(Object));
-    expect(profile.id).toBe(profileId);
+    expect(profile.id).toBe(firstProfileId);
   });
 });
 ```
@@ -157,46 +166,65 @@ describeIfConfigured('Meticulous REST read endpoints', () => {
 - [ ] **Step 5: Add guarded write-endpoint integration tests**
 
 ```ts
-import { describe, expect, it } from 'vitest';
-import { createMeticulousClient } from '../src/index';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import {
+  createMeticulousClient,
+  METICULOUS_ACTIONS,
+} from '../src/index';
+import { readIntegrationConfig } from '../src/integration-config';
 
-const baseUrl = process.env.METICULOUS_BASE_URL;
-const allowWriteTests = process.env.METICULOUS_ALLOW_WRITE_TESTS === '1';
-const profileId = process.env.METICULOUS_PROFILE_ID;
-const settingsPatchJson = process.env.METICULOUS_SETTINGS_PATCH_JSON;
-
-const describeIfConfigured = baseUrl && allowWriteTests ? describe : describe.skip;
+const integrationConfig = readIntegrationConfig();
+const describeIfConfigured =
+  integrationConfig.enabled &&
+  integrationConfig.baseUrl &&
+  integrationConfig.allowWriteTests
+    ? describe
+    : describe.skip;
 
 describeIfConfigured('Meticulous REST write endpoints', () => {
-  const client = createMeticulousClient({ baseUrl: baseUrl! });
+  const client = createMeticulousClient({
+    baseUrl: integrationConfig.baseUrl ?? 'http://127.0.0.1:8080',
+  });
+  let firstProfileId: string | undefined;
+  let settingsPatch: Record<string, unknown> | undefined;
+
+  beforeAll(async () => {
+    const profiles = await client.listProfiles();
+    const firstProfile = profiles[0];
+    firstProfileId = typeof firstProfile?.id === 'string' ? firstProfile.id : undefined;
+    settingsPatch = integrationConfig.settingsPatch;
+  });
+
+  afterAll(async () => {
+    await client.triggerAction(METICULOUS_ACTIONS.STOP).catch(() => undefined);
+  });
 
   it('posts tare', async () => {
     await expect(client.tare()).resolves.toBeUndefined();
   });
 
-  it('loads a profile when METICULOUS_PROFILE_ID is set', async () => {
-    if (!profileId) {
+  it('loads a profile when the machine returns a profile id', async () => {
+    if (!firstProfileId) {
       return;
     }
 
-    const result = await client.loadProfile(profileId);
+    const result = await client.loadProfile(firstProfileId);
 
     expect(result).toEqual(expect.any(Object));
   });
 
-  it('updates settings when METICULOUS_SETTINGS_PATCH_JSON is set', async () => {
-    if (!settingsPatchJson) {
+  it('updates settings when a safe patch is available', async () => {
+    if (!settingsPatch) {
       return;
     }
 
-    const patch = JSON.parse(settingsPatchJson) as Record<string, unknown>;
-    const result = await client.updateSettings(patch);
+    const result = await client.updateSettings(settingsPatch);
 
     expect(result).toEqual(expect.any(Object));
   });
 
   it('runs preheat through the generic action endpoint', async () => {
-    const result = await client.triggerAction('preheat');
+    const result = await client.triggerAction(METICULOUS_ACTIONS.PREHEAT);
 
     expect(result).toEqual(expect.any(Object));
   });
@@ -241,8 +269,8 @@ git commit -m "test: add meticulous integration harness"
 Run:
 
 ```bash
+METICULOUS_RUN_INTEGRATION=1 \
 METICULOUS_BASE_URL=http://<machine-ip>:8080 \
-METICULOUS_PROFILE_ID=<known-profile-id> \
 yarn workspace @shotlab/meticulous-client test:integration
 ```
 
@@ -253,8 +281,8 @@ Expected: PASS for `machine`, `settings`, `profile/list`, `history`, and optiona
 Run:
 
 ```bash
+METICULOUS_RUN_INTEGRATION=1 \
 METICULOUS_BASE_URL=http://<machine-ip>:8080 \
-METICULOUS_PROFILE_ID=<known-profile-id> \
 METICULOUS_ALLOW_WRITE_TESTS=1 \
 METICULOUS_SETTINGS_PATCH_JSON='{"auto_preheat":false}' \
 yarn workspace @shotlab/meticulous-client test:integration:write
@@ -283,9 +311,10 @@ GET /history
 
 ```http
 GET /profile/list
+GET /profile/list?full=true
 GET /profile/get/:id
 GET /profile/load/:id
-POST /profile/save
+GET /profile/last
 ```
 
 #### Settings
@@ -299,7 +328,7 @@ POST /settings
 
 ```http
 POST /action/tare
-GET /action/preheat
+POST /action/preheat
 ```
 ````
 
@@ -309,9 +338,9 @@ GET /action/preheat
 ### Suspected Endpoints
 
 ```http
-GET /action/start
-GET /action/stop
-GET /action/purge
+POST /action/start
+POST /action/stop
+POST /action/purge
 ```
 
 Status:
@@ -348,16 +377,11 @@ export interface HistoryResponse extends JsonObject {
   history: HistoryEntry[];
 }
 
-export interface MachineSettings extends JsonObject {}
+export type Profile = JsonObject;
+export type Settings = JsonObject;
 
-export interface ProfileSummary extends JsonObject {
-  id?: string;
-  name?: string;
-}
-
-export interface Profile extends JsonObject {
-  id?: string;
-  name?: string;
+export interface ListProfilesOptions {
+  full?: boolean;
 }
 ```
 
@@ -365,19 +389,19 @@ export interface Profile extends JsonObject {
 
 ```ts
 export interface MeticulousClient {
+  getCurrentHistory(): Promise<HistoryResponse>;
   getHistory(): Promise<HistoryResponse>;
+  getLastHistory(): Promise<HistoryResponse>;
+  getLastProfile(): Promise<Profile>;
   getMachine(): Promise<MachineInfo>;
   getProfile(id: string): Promise<Profile>;
-  getSettings(): Promise<MachineSettings>;
-  listProfiles(): Promise<ProfileSummary[]>;
+  getSettings(): Promise<Settings>;
+  listProfiles(options?: ListProfilesOptions): Promise<JsonArray>;
   loadProfile(id: string): Promise<JsonObject>;
   preheat(): Promise<JsonObject>;
-  saveProfile(profile: JsonObject): Promise<JsonObject>;
-  start(): Promise<JsonObject>;
-  stop(): Promise<JsonObject>;
   tare(): Promise<void>;
   triggerAction(name: string): Promise<JsonObject>;
-  updateSettings(patch: JsonObject): Promise<MachineSettings>;
+  updateSettings(patch: JsonObject): Promise<Settings>;
 }
 ```
 
@@ -385,33 +409,24 @@ export interface MeticulousClient {
 
 ```ts
   return {
+    getCurrentHistory: () => request<HistoryResponse>('history/current'),
     getHistory: () => request<HistoryResponse>('history'),
+    getLastHistory: () => request<HistoryResponse>('history/last'),
+    getLastProfile: () => request<Profile>('profile/last'),
     getMachine: () => request<MachineInfo>('machine'),
     getProfile: (id: string) =>
       request<Profile>(`profile/get/${encodeURIComponent(id)}`),
-    getSettings: () => request<MachineSettings>('settings'),
-    listProfiles: () => request<ProfileSummary[]>('profile/list'),
+    getSettings: () => request<Settings>('settings'),
+    listProfiles: (listOptions?: ListProfilesOptions) =>
+      request<JsonArray>(`profile/list${listOptions?.full ? '?full=true' : ''}`),
     loadProfile: (id: string) =>
       request<JsonObject>(`profile/load/${encodeURIComponent(id)}`),
-    preheat: () => requestAction('preheat'),
-    saveProfile: (profile: JsonObject) =>
-      request<JsonObject>('profile/save', {
-        method: 'POST',
-        body: JSON.stringify(profile),
-        headers: { 'content-type': 'application/json' },
-      }),
-    start: () => requestAction('start'),
-    stop: () => requestAction('stop'),
+    preheat: () => requestAction(METICULOUS_ACTIONS.PREHEAT),
     tare: async () => {
-      await request('action/tare', { method: 'POST' });
+      await requestAction(METICULOUS_ACTIONS.TARE);
     },
     triggerAction: requestAction,
-    updateSettings: (patch: JsonObject) =>
-      request<MachineSettings>('settings', {
-        method: 'POST',
-        body: JSON.stringify(patch),
-        headers: { 'content-type': 'application/json' },
-      }),
+    updateSettings: (patch: JsonObject) => postJson<Settings>('settings', patch),
   };
 ```
 
@@ -420,7 +435,7 @@ export interface MeticulousClient {
 ```ts
   function requestAction(name: string): Promise<JsonObject> {
     return request<JsonObject>(`action/${encodeURIComponent(name)}`, {
-      method: 'GET',
+      method: 'POST',
     });
   }
 ```
@@ -564,18 +579,16 @@ git commit -m "feat: expand meticulous rest read endpoints"
 ```ts
     loadProfile: (id: string) =>
       request<JsonObject>(`profile/load/${encodeURIComponent(id)}`),
-    preheat: () => requestAction('preheat'),
-    saveProfile: (profile: JsonObject) =>
-      request<JsonObject>('profile/save', {
-        method: 'POST',
-        body: JSON.stringify(profile),
-        headers: { 'content-type': 'application/json' },
-      }),
-    start: () => requestAction('start'),
-    stop: () => requestAction('stop'),
+    preheat: () => requestAction(METICULOUS_ACTIONS.PREHEAT),
+    tare: async () => {
+      await requestAction(METICULOUS_ACTIONS.TARE);
+    },
+    triggerAction: requestAction,
+    updateSettings: (patch: JsonObject) =>
+      postJson<Settings>('settings', patch),
 ```
 
-- [ ] **Step 2: Add unit tests for `loadProfile`, `saveProfile`, `start`, and `stop`**
+- [ ] **Step 2: Add unit tests for `loadProfile`, `preheat`, and the encoded generic action path**
 
 ```ts
   it('loads a profile by id', async () => {
@@ -600,8 +613,7 @@ git commit -m "feat: expand meticulous rest read endpoints"
     );
   });
 
-  it('posts a profile payload to save', async () => {
-    const profile = { id: 'abc', name: 'Default' };
+  it('posts the known preheat action', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ ok: true, id: 'abc' }), {
         headers: { 'content-type': 'application/json' },
@@ -613,15 +625,33 @@ git commit -m "feat: expand meticulous rest read endpoints"
       fetch: fetchImpl,
     });
 
-    await client.saveProfile(profile);
+    await client.preheat();
 
     expect(fetchImpl).toHaveBeenCalledWith(
-      'http://machine.local:8080/api/v1/profile/save',
+      'http://machine.local:8080/api/v1/action/preheat',
       {
-        body: JSON.stringify(profile),
-        headers: { 'content-type': 'application/json' },
         method: 'POST',
       },
+    );
+  });
+
+  it('encodes generic action names before posting them', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        headers: { 'content-type': 'application/json' },
+        status: 200,
+      }),
+    );
+    const client = createMeticulousClient({
+      baseUrl: 'http://machine.local:8080',
+      fetch: fetchImpl,
+    });
+
+    await client.triggerAction('preheat?x=1');
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://machine.local:8080/api/v1/action/preheat%3Fx%3D1',
+      { method: 'POST' },
     );
   });
 ```
@@ -631,8 +661,8 @@ git commit -m "feat: expand meticulous rest read endpoints"
 Run:
 
 ```bash
+METICULOUS_RUN_INTEGRATION=1 \
 METICULOUS_BASE_URL=http://<machine-ip>:8080 \
-METICULOUS_PROFILE_ID=<known-profile-id> \
 METICULOUS_ALLOW_WRITE_TESTS=1 \
 METICULOUS_SETTINGS_PATCH_JSON='{"auto_preheat":false}' \
 yarn workspace @shotlab/meticulous-client test:integration:write
@@ -665,7 +695,10 @@ Reusable TypeScript client for the Meticulous Espresso Machine protocol.
 ## Usage
 
 ```ts
-import { createMeticulousClient } from '@shotlab/meticulous-client';
+import {
+  createMeticulousClient,
+  METICULOUS_ACTIONS,
+} from '@shotlab/meticulous-client';
 
 const client = createMeticulousClient({
   baseUrl: 'http://<machine-ip>:8080',
@@ -677,7 +710,7 @@ const profiles = await client.listProfiles();
 const history = await client.getHistory();
 
 await client.tare();
-await client.preheat();
+await client.triggerAction(METICULOUS_ACTIONS.PREHEAT);
 ```
 
 ## Integration Tests
@@ -685,16 +718,16 @@ await client.preheat();
 Read-only verification:
 
 ```bash
+METICULOUS_RUN_INTEGRATION=1 \
 METICULOUS_BASE_URL=http://<machine-ip>:8080 \
-METICULOUS_PROFILE_ID=<known-profile-id> \
 yarn workspace @shotlab/meticulous-client test:integration
 ```
 
 Guarded write verification:
 
 ```bash
+METICULOUS_RUN_INTEGRATION=1 \
 METICULOUS_BASE_URL=http://<machine-ip>:8080 \
-METICULOUS_PROFILE_ID=<known-profile-id> \
 METICULOUS_ALLOW_WRITE_TESTS=1 \
 METICULOUS_SETTINGS_PATCH_JSON='{"auto_preheat":false}' \
 yarn workspace @shotlab/meticulous-client test:integration:write
@@ -704,14 +737,17 @@ Implemented endpoints:
 
 - `GET /api/v1/machine`
 - `GET /api/v1/history`
+- `GET /api/v1/history/current`
+- `GET /api/v1/history/last`
 - `GET /api/v1/profile/list`
+- `GET /api/v1/profile/list?full=true`
 - `GET /api/v1/profile/get/:id`
 - `GET /api/v1/profile/load/:id`
-- `POST /api/v1/profile/save`
+- `GET /api/v1/profile/last`
 - `GET /api/v1/settings`
 - `POST /api/v1/settings`
 - `POST /api/v1/action/tare`
-- `GET /api/v1/action/preheat`
+- `POST /api/v1/action/preheat`
 ```
 ````
 
@@ -760,4 +796,4 @@ git commit -m "docs: expand meticulous client usage"
 
 - Spec coverage: The plan covers integration harness creation, local endpoint confirmation, read endpoint expansion, guarded write endpoint expansion, and docs/protocol updates.
 - Placeholder scan: No `TODO`, `TBD`, or “figure it out later” steps remain.
-- Type consistency: The plan uses `HistoryResponse`, `MachineSettings`, `ProfileSummary`, `Profile`, `triggerAction`, `loadProfile`, `saveProfile`, and `updateSettings` consistently across tests, implementation, and docs.
+- Type consistency: The plan uses `HistoryResponse`, `Settings`, `Profile`, `ListProfilesOptions`, `METICULOUS_ACTIONS`, `triggerAction`, `loadProfile`, and `updateSettings` consistently across tests, implementation, and docs.

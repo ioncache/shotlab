@@ -67,7 +67,16 @@ describe('readIntegrationConfig', () => {
         METICULOUS_BASE_URL: 'not-a-url',
         METICULOUS_RUN_INTEGRATION: '1',
       }),
-    ).toThrow('METICULOUS_BASE_URL must be a valid URL');
+    ).toThrow('METICULOUS_BASE_URL must be a valid http(s) URL');
+  });
+
+  it('rejects non-http integration base urls', () => {
+    expect(() =>
+      readIntegrationConfig({
+        METICULOUS_BASE_URL: 'file:///tmp/meticulous.sock',
+        METICULOUS_RUN_INTEGRATION: '1',
+      }),
+    ).toThrow('METICULOUS_BASE_URL must be a valid http(s) URL');
   });
 
   it('rejects invalid settings patch json', () => {

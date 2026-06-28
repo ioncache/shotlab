@@ -9,9 +9,9 @@ const optionalTrimmedStringSchema = z
   });
 
 const optionalUrlStringSchema = optionalTrimmedStringSchema.refine(
-  (value) => value == null || isValidUrl(value),
+  (value) => value == null || isValidHttpUrl(value),
   {
-    message: 'METICULOUS_BASE_URL must be a valid URL',
+    message: 'METICULOUS_BASE_URL must be a valid http(s) URL',
   },
 );
 
@@ -75,8 +75,13 @@ function isJsonObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function isValidUrl(value: string): boolean {
-  return URL.canParse(value);
+function isValidHttpUrl(value: string): boolean {
+  if (!URL.canParse(value)) {
+    return false;
+  }
+
+  const { protocol } = new URL(value);
+  return protocol === 'http:' || protocol === 'https:';
 }
 
 const integrationEnvSchema = z
