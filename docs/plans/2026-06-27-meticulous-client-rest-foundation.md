@@ -1,8 +1,5 @@
 # Meticulous Client REST Foundation Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan
-> task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
 **Goal:** Build the first usable `@shotlab/meticulous-client` code: a tiny REST client for confirmed Meticulous
 machine endpoints.
 
