@@ -59,6 +59,12 @@ coverage
 # Claude
 .claude/settings.local.json
 
+# codex
+.codex-cache/
+
+# misc AI
+graphify-out
+
 # Worktrees
 .worktrees/
 worktrees/
@@ -66,5 +72,4 @@ worktrees/
 # Misc
 .dccache
 .*.bak
-graphify-out/
 tmp/
