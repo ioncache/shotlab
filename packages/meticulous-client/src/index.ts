@@ -1,4 +1,5 @@
 export type JsonObject = Record<string, unknown>;
+export type JsonArray = unknown[];
 
 export interface MeticulousClientOptions {
   baseUrl: string;
@@ -6,10 +7,38 @@ export interface MeticulousClientOptions {
 }
 
 export type MachineInfo = JsonObject;
+export type HistoryResponse = JsonObject;
+export type Profile = JsonObject;
+export type Settings = JsonObject;
+export type MeticulousActionCatalog = Record<string, string>;
+export const METICULOUS_ACTIONS: MeticulousActionCatalog & {
+  readonly PREHEAT: 'preheat';
+  readonly STOP: 'stop';
+  readonly TARE: 'tare';
+} = {
+  PREHEAT: 'preheat',
+  STOP: 'stop',
+  TARE: 'tare',
+};
+
+export interface ListProfilesOptions {
+  full?: boolean;
+}
 
 export interface MeticulousClient {
+  getCurrentHistory(): Promise<HistoryResponse>;
+  getHistory(): Promise<HistoryResponse>;
+  getLastHistory(): Promise<HistoryResponse>;
+  getLastProfile(): Promise<Profile>;
   getMachine(): Promise<MachineInfo>;
+  getProfile(id: string): Promise<Profile>;
+  getSettings(): Promise<Settings>;
+  listProfiles(options?: ListProfilesOptions): Promise<JsonArray>;
+  loadProfile(id: string): Promise<JsonObject>;
+  preheat(): Promise<JsonObject>;
   tare(): Promise<void>;
+  triggerAction(name: string): Promise<JsonObject>;
+  updateSettings(patch: JsonObject): Promise<Settings>;
 }
 
 export class MeticulousHttpError extends Error {
@@ -26,6 +55,10 @@ export class MeticulousHttpError extends Error {
     this.status = response.status;
     this.statusText = response.statusText;
   }
+}
+
+function actionPath(name: string): string {
+  return `action/${encodeURIComponent(name)}`;
 }
 
 export function createMeticulousClient(
@@ -52,11 +85,40 @@ export function createMeticulousClient(
     return JSON.parse(body) as T;
   }
 
+  function get<T>(path: string): Promise<T> {
+    return request<T>(path);
+  }
+
+  function post<T = void>(path: string): Promise<T> {
+    return request<T>(path, { method: 'POST' });
+  }
+
+  function postJson<T>(path: string, body: JsonObject): Promise<T> {
+    return request<T>(path, {
+      body: JSON.stringify(body),
+      headers: { 'content-type': 'application/json' },
+      method: 'POST',
+    });
+  }
+
   return {
-    getMachine: () => request<MachineInfo>('machine'),
+    getCurrentHistory: () => get<HistoryResponse>('history/current'),
+    getHistory: () => get<HistoryResponse>('history'),
+    getLastHistory: () => get<HistoryResponse>('history/last'),
+    getLastProfile: () => get<Profile>('profile/last'),
+    getMachine: () => get<MachineInfo>('machine'),
+    getProfile: (id) => get<Profile>(`profile/get/${encodeURIComponent(id)}`),
+    getSettings: () => get<Settings>('settings'),
+    listProfiles: (listOptions) =>
+      get<JsonArray>(`profile/list${listOptions?.full ? '?full=true' : ''}`),
+    loadProfile: (id) =>
+      get<JsonObject>(`profile/load/${encodeURIComponent(id)}`),
+    preheat: () => post<JsonObject>(actionPath(METICULOUS_ACTIONS.PREHEAT)),
     tare: async () => {
-      await request('action/tare', { method: 'POST' });
+      await post(actionPath(METICULOUS_ACTIONS.TARE));
     },
+    triggerAction: (name) => post<JsonObject>(actionPath(name)),
+    updateSettings: (patch) => postJson<Settings>('settings', patch),
   };
 }
 

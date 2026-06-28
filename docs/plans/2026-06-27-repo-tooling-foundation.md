@@ -1,7 +1,5 @@
 # Repo Tooling Foundation Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
 **Goal:** Establish ShotLab's repo-level JavaScript/TypeScript tooling and workspace skeleton before protocol implementation begins.
 
 **Architecture:** Use Node 24 with Yarn 4 workspaces and ~~Plug'n'Play~~ `node_modules`. The original plan copied the recent `data-sanitization` Plug'n'Play setup, but ShotLab now uses `nodeLinker: node-modules` because Vitest runs through Vite, and Vite warns that Yarn PnP support is no longer actively maintained. Keep this pass limited to repo hygiene, config, and skeleton directories; no protocol, UI, API, database, or service implementation.

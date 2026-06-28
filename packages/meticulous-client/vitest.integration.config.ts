@@ -9,6 +9,7 @@ export default mergeConfig(baseConfig, {
     },
   },
   test: {
-    include: ['src/**/*.test.ts'],
+    include: ['integration/**/*.test.ts'],
+    testTimeout: 30_000,
   },
 });

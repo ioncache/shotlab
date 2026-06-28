@@ -11,6 +11,14 @@ describe('MeticulousClient', () => {
     expect(meticulous).not.toHaveProperty('MeticulousClient');
   });
 
+  it('exports known machine action names', () => {
+    expect(meticulous.METICULOUS_ACTIONS).toEqual({
+      PREHEAT: 'preheat',
+      STOP: 'stop',
+      TARE: 'tare',
+    });
+  });
+
   it('fetches machine information from the normalized API base URL', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ firmware: '0.2.24-369-gd28e82a' }), {
@@ -88,6 +96,261 @@ describe('MeticulousClient', () => {
     await expect(client.tare()).resolves.toBeUndefined();
     expect(fetchImpl).toHaveBeenCalledWith(
       'http://machine.local:8080/api/v1/action/tare',
+      { method: 'POST' },
+    );
+  });
+
+  it('fetches settings from the machine API', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ auto_preheat: true }), {
+        headers: { 'content-type': 'application/json' },
+        status: 200,
+      }),
+    );
+    const client = createMeticulousClient({
+      baseUrl: 'http://machine.local:8080',
+      fetch: fetchImpl,
+    });
+
+    await expect(client.getSettings()).resolves.toEqual({
+      auto_preheat: true,
+    });
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://machine.local:8080/api/v1/settings',
+      { method: 'GET' },
+    );
+  });
+
+  it('fetches profile summaries', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify([{ id: 'espresso' }]), {
+        headers: { 'content-type': 'application/json' },
+        status: 200,
+      }),
+    );
+    const client = createMeticulousClient({
+      baseUrl: 'http://machine.local:8080',
+      fetch: fetchImpl,
+    });
+
+    await expect(client.listProfiles()).resolves.toEqual([{ id: 'espresso' }]);
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://machine.local:8080/api/v1/profile/list',
+      { method: 'GET' },
+    );
+  });
+
+  it('can request the full profile list variant', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify([{ id: 'espresso', steps: [] }]), {
+        headers: { 'content-type': 'application/json' },
+        status: 200,
+      }),
+    );
+    const client = createMeticulousClient({
+      baseUrl: 'http://machine.local:8080',
+      fetch: fetchImpl,
+    });
+
+    await expect(client.listProfiles({ full: true })).resolves.toEqual([
+      { id: 'espresso', steps: [] },
+    ]);
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://machine.local:8080/api/v1/profile/list?full=true',
+      { method: 'GET' },
+    );
+  });
+
+  it('fetches an individual profile by id', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ id: 'profile/1' }), {
+        headers: { 'content-type': 'application/json' },
+        status: 200,
+      }),
+    );
+    const client = createMeticulousClient({
+      baseUrl: 'http://machine.local:8080',
+      fetch: fetchImpl,
+    });
+
+    await expect(client.getProfile('profile/1')).resolves.toEqual({
+      id: 'profile/1',
+    });
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://machine.local:8080/api/v1/profile/get/profile%2F1',
+      { method: 'GET' },
+    );
+  });
+
+  it('fetches brew history', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ history: [] }), {
+        headers: { 'content-type': 'application/json' },
+        status: 200,
+      }),
+    );
+    const client = createMeticulousClient({
+      baseUrl: 'http://machine.local:8080',
+      fetch: fetchImpl,
+    });
+
+    await expect(client.getHistory()).resolves.toEqual({ history: [] });
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://machine.local:8080/api/v1/history',
+      { method: 'GET' },
+    );
+  });
+
+  it('fetches current history', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ phase: 'pouring' }), {
+        headers: { 'content-type': 'application/json' },
+        status: 200,
+      }),
+    );
+    const client = createMeticulousClient({
+      baseUrl: 'http://machine.local:8080',
+      fetch: fetchImpl,
+    });
+
+    await expect(client.getCurrentHistory()).resolves.toEqual({
+      phase: 'pouring',
+    });
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://machine.local:8080/api/v1/history/current',
+      { method: 'GET' },
+    );
+  });
+
+  it('fetches the last history entry', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ id: 'last-shot' }), {
+        headers: { 'content-type': 'application/json' },
+        status: 200,
+      }),
+    );
+    const client = createMeticulousClient({
+      baseUrl: 'http://machine.local:8080',
+      fetch: fetchImpl,
+    });
+
+    await expect(client.getLastHistory()).resolves.toEqual({
+      id: 'last-shot',
+    });
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://machine.local:8080/api/v1/history/last',
+      { method: 'GET' },
+    );
+  });
+
+  it('fetches the last profile', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ id: 'last-profile' }), {
+        headers: { 'content-type': 'application/json' },
+        status: 200,
+      }),
+    );
+    const client = createMeticulousClient({
+      baseUrl: 'http://machine.local:8080',
+      fetch: fetchImpl,
+    });
+
+    await expect(client.getLastProfile()).resolves.toEqual({
+      id: 'last-profile',
+    });
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://machine.local:8080/api/v1/profile/last',
+      { method: 'GET' },
+    );
+  });
+
+  it('loads a profile by id', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ id: 'espresso', ok: true }), {
+        headers: { 'content-type': 'application/json' },
+        status: 200,
+      }),
+    );
+    const client = createMeticulousClient({
+      baseUrl: 'http://machine.local:8080',
+      fetch: fetchImpl,
+    });
+
+    await expect(client.loadProfile('espresso')).resolves.toEqual({
+      id: 'espresso',
+      ok: true,
+    });
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://machine.local:8080/api/v1/profile/load/espresso',
+      { method: 'GET' },
+    );
+  });
+
+  it('posts settings patches as JSON', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ auto_preheat: false }), {
+        headers: { 'content-type': 'application/json' },
+        status: 200,
+      }),
+    );
+    const client = createMeticulousClient({
+      baseUrl: 'http://machine.local:8080',
+      fetch: fetchImpl,
+    });
+
+    await expect(
+      client.updateSettings({ auto_preheat: false }),
+    ).resolves.toEqual({
+      auto_preheat: false,
+    });
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://machine.local:8080/api/v1/settings',
+      {
+        body: JSON.stringify({ auto_preheat: false }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      },
+    );
+  });
+
+  it('posts generic action requests', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        headers: { 'content-type': 'application/json' },
+        status: 200,
+      }),
+    );
+    const client = createMeticulousClient({
+      baseUrl: 'http://machine.local:8080',
+      fetch: fetchImpl,
+    });
+
+    await expect(client.triggerAction('preheat?x=1')).resolves.toEqual({
+      ok: true,
+    });
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://machine.local:8080/api/v1/action/preheat%3Fx%3D1',
+      { method: 'POST' },
+    );
+  });
+
+  it('provides a dedicated preheat helper', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        headers: { 'content-type': 'application/json' },
+        status: 200,
+      }),
+    );
+    const client = createMeticulousClient({
+      baseUrl: 'http://machine.local:8080',
+      fetch: fetchImpl,
+    });
+
+    await expect(client.preheat()).resolves.toEqual({
+      ok: true,
+    });
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://machine.local:8080/api/v1/action/preheat',
       { method: 'POST' },
     );
   });

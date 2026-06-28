@@ -50,9 +50,10 @@ Returns:
 
 ---
 
-#### Tare
+#### Suspected actions
 
 ```http
+POST /action/preheat
 POST /action/tare
 ```
 
@@ -62,30 +63,14 @@ Status:
 
 ---
 
-### Suspected Endpoints
-
-#### Actions
+#### Suspected profiles
 
 ```http
-POST /action/start
-POST /action/stop
-POST /action/preheat
-POST /action/tare
-```
-
----
-
-#### Profiles
-
-```http
-GET  /profile/list
-GET  /profile/list?full=true
-GET  /profile/get/:id
-
-POST /profile/load
-POST /profile/save
-
-GET  /profile/last
+GET /profile/list
+GET /profile/list?full=true
+GET /profile/get/:id
+GET /profile/load/:id
+GET /profile/last
 ```
 
 ---
@@ -105,6 +90,25 @@ GET /history/last
 ```http
 GET /settings
 POST /settings
+```
+
+---
+
+### Suspected Endpoints
+
+#### Actions
+
+```http
+POST /action/start
+POST /action/stop
+```
+
+---
+
+#### Profiles
+
+```http
+POST /profile/save
 ```
 
 ---

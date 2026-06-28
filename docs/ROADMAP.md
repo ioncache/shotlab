@@ -18,7 +18,7 @@ Each step should be roughly one PR or one branch/worktree of work.
   - Confirm the REST endpoints we already know about.
   - Build the minimal `@shotlab/meticulous-client` package around `GET /machine` and `POST /action/tare`.
   - Add the first real machine smoke test and package docs.
-- [ ] REST endpoint expansion
+- [x] REST endpoint expansion
   - Discover the remaining REST endpoints.
   - Add client methods only for confirmed endpoints.
   - Document request/response shapes as they become known.
