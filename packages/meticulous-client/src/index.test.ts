@@ -224,7 +224,7 @@ describe('MeticulousClient', () => {
 
   it('fetches the last history entry', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ id: 'last-shot' }), {
+      new Response(JSON.stringify({ id: 'last-shot', data: [] }), {
         headers: { 'content-type': 'application/json' },
         status: 200,
       }),
@@ -235,6 +235,7 @@ describe('MeticulousClient', () => {
     });
 
     await expect(client.getLastHistory()).resolves.toEqual({
+      data: [],
       id: 'last-shot',
     });
     expect(fetchImpl).toHaveBeenCalledWith(

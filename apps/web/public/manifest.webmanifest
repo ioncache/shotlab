@@ -1,0 +1,16 @@
+{
+  "name": "ShotLab",
+  "short_name": "ShotLab",
+  "display": "standalone",
+  "background_color": "#edf1f4",
+  "theme_color": "#4f7a90",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

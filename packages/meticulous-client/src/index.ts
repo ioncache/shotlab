@@ -7,9 +7,53 @@ export interface MeticulousClientOptions {
 }
 
 export type MachineInfo = JsonObject;
-export type HistoryResponse = JsonObject;
 export type Profile = JsonObject;
 export type Settings = JsonObject;
+export interface HistoryShotSensors extends JsonObject {
+  external_1?: number;
+  external_2?: number;
+}
+export interface HistoryShotMetrics extends JsonObject {
+  flow?: number;
+  gravimetric_flow?: number;
+  pressure?: number;
+  weight?: number;
+}
+export interface HistoryPoint extends JsonObject {
+  profile_time?: number;
+  sensors?: HistoryShotSensors;
+  shot?: HistoryShotMetrics;
+  status?: string;
+  time?: number;
+}
+export interface HistoryEntry extends JsonObject {
+  brewed_at?: string;
+  created_at?: string;
+  data?: HistoryPoint[];
+  dose?: number;
+  dose_grams?: number;
+  duration?: number;
+  duration_seconds?: number;
+  id?: string;
+  name?: string;
+  profile?: string;
+  profile_name?: string;
+  profile_title?: string;
+  points?: JsonObject[];
+  temperature?: number;
+  final_temperature?: number;
+  time?: number;
+  timestamp?: string;
+  uuid?: string;
+  weight?: number;
+  weights?: number[];
+  weight_trace?: number[];
+  yield?: number;
+  yield_grams?: number;
+}
+export interface HistoryResponse extends JsonObject {
+  history?: HistoryEntry[];
+}
 export type MeticulousActionCatalog = Record<string, string>;
 export const METICULOUS_ACTIONS: MeticulousActionCatalog & {
   readonly PREHEAT: 'preheat';
@@ -26,9 +70,9 @@ export interface ListProfilesOptions {
 }
 
 export interface MeticulousClient {
-  getCurrentHistory(): Promise<HistoryResponse>;
+  getCurrentHistory(): Promise<HistoryEntry | JsonObject>;
   getHistory(): Promise<HistoryResponse>;
-  getLastHistory(): Promise<HistoryResponse>;
+  getLastHistory(): Promise<HistoryEntry>;
   getLastProfile(): Promise<Profile>;
   getMachine(): Promise<MachineInfo>;
   getProfile(id: string): Promise<Profile>;
