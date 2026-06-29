@@ -149,7 +149,7 @@ export function createMeticulousClient(
   return {
     getCurrentHistory: () => get<CurrentHistory>('history/current'),
     getHistory: () => get<HistoryResponse>('history'),
-    getLastHistory: () => get<HistoryResponse>('history/last'),
+    getLastHistory: () => get<HistoryEntry>('history/last'),
     getLastProfile: () => get<Profile>('profile/last'),
     getMachine: () => get<MachineInfo>('machine'),
     getProfile: (id) => get<Profile>(`profile/get/${encodeURIComponent(id)}`),
