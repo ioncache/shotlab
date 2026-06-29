@@ -9,7 +9,7 @@ export interface DashboardShotPoint {
   pressure: number | null;
   second: number;
   temperatureCelsius: number | null;
-  weight: number;
+  weight: number | null;
 }
 
 export interface DashboardShot {

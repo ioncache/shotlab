@@ -199,7 +199,57 @@ describe('selectHistoryShots', () => {
       { label: 'Machine status', value: 'Unknown' },
       { label: 'Weight', value: 'Unavailable' },
       { label: 'Last loaded profile', value: 'Italian' },
-      { label: 'Pre-heat', value: 'Unknown' },
+      { label: 'Pre-heat', value: 'On' },
+    ]);
+  });
+
+  it('preserves missing weight samples as null chart gaps', () => {
+    expect(
+      selectHistoryShots({
+        history: [
+          {
+            id: 'shot-gap',
+            name: 'Gap Test',
+            data: [
+              {
+                shot: { flow: 2.1, pressure: 1.2, gravimetric_flow: 0.4, weight: 3.2 },
+                time: 1000,
+              },
+              {
+                shot: { flow: 2.3, pressure: 1.3, gravimetric_flow: 0.5 },
+                time: 2000,
+              },
+            ],
+          },
+        ],
+      }),
+    ).toEqual([
+      {
+        brewedAt: 'Unknown time',
+        doseGrams: null,
+        durationSeconds: 2,
+        id: 'shot-gap',
+        points: [
+          {
+            flow: 2.1,
+            gravimetricFlow: 0.4,
+            pressure: 1.2,
+            second: 1,
+            temperatureCelsius: null,
+            weight: 3.2,
+          },
+          {
+            flow: 2.3,
+            gravimetricFlow: 0.5,
+            pressure: 1.3,
+            second: 2,
+            temperatureCelsius: null,
+            weight: null,
+          },
+        ],
+        profile: 'Gap Test',
+        yieldGrams: null,
+      },
     ]);
   });
 });

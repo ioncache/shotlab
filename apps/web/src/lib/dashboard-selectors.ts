@@ -2,7 +2,7 @@ import type {
   HistoryEntry,
   HistoryResponse,
   JsonObject,
-} from '../../../../packages/meticulous-client/src/index';
+} from '@shotlab/meticulous-client';
 import type {
   DashboardMetric,
   DashboardShot,
@@ -53,7 +53,9 @@ export function selectLiveCards(
     },
     {
       label: 'Pre-heat',
-      value: readBoolean(settings, 'preheat', 'pre_heat') ?? 'Unknown',
+      value:
+        readBoolean(settings, 'preheat', 'pre_heat', 'heat_on_boot') ??
+        'Unknown',
     },
   ];
 }
@@ -131,9 +133,9 @@ function selectShotPoints(row: JsonObject): DashboardShotPoint[] {
         const nextPoint = asObject(point);
         const shot = asObject(nextPoint.shot);
         const millisecond = readNumber(nextPoint, 'time', 'profile_time');
-        const weight = readNumber(shot, 'weight');
+        const weight = readNullableNumber(shot, 'weight');
 
-        if (millisecond === undefined || weight === undefined) {
+        if (millisecond === undefined) {
           return undefined;
         }
 
@@ -159,9 +161,9 @@ function selectShotPoints(row: JsonObject): DashboardShotPoint[] {
       const nextPoint = asObject(point);
       const second =
         readNumber(nextPoint, 'second', 'time', 't') ?? index;
-      const weight = readNumber(nextPoint, 'weight', 'y', 'value');
+      const weight = readNullableNumber(nextPoint, 'weight', 'y', 'value');
 
-      if (weight === undefined) {
+      if (weight === null && readNumber(nextPoint, 'second', 'time', 't') === undefined) {
         return undefined;
       }
 

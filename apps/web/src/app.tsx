@@ -22,7 +22,7 @@ import { useEffect, useState } from 'react';
 import type {
   HistoryResponse,
   JsonObject,
-} from '../../../packages/meticulous-client/src/index';
+} from '@shotlab/meticulous-client';
 import { readAppConfig } from './config';
 import { createDashboardClient } from './lib/create-dashboard-client';
 import { selectDashboardSnapshot } from './lib/dashboard-selectors';
@@ -59,7 +59,7 @@ function isLiveCardLoading(label: string, loading: LoadState): boolean {
     case 'Weight':
       return loading.machine;
     case 'Last loaded profile':
-      return loading.machine && loading.lastProfile;
+      return loading.lastProfile;
     case 'Pre-heat':
       return loading.settings;
     default:
@@ -92,7 +92,11 @@ export function App() {
     }
 
     let isCancelled = false;
-    const client = createDashboardClient(config.meticulousBaseUrl);
+    const controller = new AbortController();
+    const client = createDashboardClient(
+      config.meticulousBaseUrl,
+      (input, init) => fetch(input, { ...init, signal: controller.signal }),
+    );
 
     setMachine(emptyObject);
     setSettings(emptyObject);
@@ -190,6 +194,7 @@ export function App() {
 
     return () => {
       isCancelled = true;
+      controller.abort();
     };
   }, [config.meticulousBaseUrl]);
 

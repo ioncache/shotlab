@@ -72,5 +72,6 @@ describe('App', () => {
     await screen.findByText('Off');
 
     mocks.deferreds.history.resolve({ history: [] });
+    await screen.findByText('No history rows have been mapped yet.');
   });
 });

@@ -1,4 +1,4 @@
-import type { MeticulousClient } from '../../../../packages/meticulous-client/src/index';
+import type { MeticulousClient } from '@shotlab/meticulous-client';
 import { selectDashboardSnapshot } from './dashboard-selectors';
 
 type ReadDashboardClient = Pick<

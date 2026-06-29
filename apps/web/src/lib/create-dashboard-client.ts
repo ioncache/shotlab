@@ -1,7 +1,7 @@
 import {
   createMeticulousClient,
   type MeticulousClientOptions,
-} from '../../../../packages/meticulous-client/src/index';
+} from '@shotlab/meticulous-client';
 
 export function createDashboardClient(
   baseUrl: string,

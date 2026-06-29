@@ -54,6 +54,7 @@ export interface HistoryEntry extends JsonObject {
 export interface HistoryResponse extends JsonObject {
   history?: HistoryEntry[];
 }
+export type CurrentHistory = HistoryEntry | null;
 export type MeticulousActionCatalog = Record<string, string>;
 export const METICULOUS_ACTIONS: MeticulousActionCatalog & {
   readonly PREHEAT: 'preheat';
@@ -70,7 +71,7 @@ export interface ListProfilesOptions {
 }
 
 export interface MeticulousClient {
-  getCurrentHistory(): Promise<HistoryEntry | JsonObject>;
+  getCurrentHistory(): Promise<CurrentHistory>;
   getHistory(): Promise<HistoryResponse>;
   getLastHistory(): Promise<HistoryEntry>;
   getLastProfile(): Promise<Profile>;
@@ -146,7 +147,7 @@ export function createMeticulousClient(
   }
 
   return {
-    getCurrentHistory: () => get<HistoryResponse>('history/current'),
+    getCurrentHistory: () => get<CurrentHistory>('history/current'),
     getHistory: () => get<HistoryResponse>('history'),
     getLastHistory: () => get<HistoryResponse>('history/last'),
     getLastProfile: () => get<Profile>('profile/last'),

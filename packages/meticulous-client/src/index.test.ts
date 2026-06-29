@@ -203,7 +203,7 @@ describe('MeticulousClient', () => {
 
   it('fetches current history', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ phase: 'pouring' }), {
+      new Response(JSON.stringify(null), {
         headers: { 'content-type': 'application/json' },
         status: 200,
       }),
@@ -213,9 +213,7 @@ describe('MeticulousClient', () => {
       fetch: fetchImpl,
     });
 
-    await expect(client.getCurrentHistory()).resolves.toEqual({
-      phase: 'pouring',
-    });
+    await expect(client.getCurrentHistory()).resolves.toBeNull();
     expect(fetchImpl).toHaveBeenCalledWith(
       'http://machine.local:8080/api/v1/history/current',
       { method: 'GET' },
