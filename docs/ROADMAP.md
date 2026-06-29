@@ -49,7 +49,7 @@ Each step should be roughly one PR or one branch/worktree of work.
 
 Each step should be roughly one PR or one branch/worktree of work.
 
-- [ ] App shell and connection state
+- [x] App shell and connection state
   - Build the dashboard shell.
   - Show connection status and basic machine identity.
 - [ ] Live telemetry
