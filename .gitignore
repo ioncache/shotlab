@@ -63,6 +63,7 @@ coverage
 .codex-cache/
 
 # misc AI
+.superpowers/
 graphify-out
 
 # Worktrees
