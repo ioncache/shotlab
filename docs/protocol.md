@@ -161,20 +161,18 @@ Current gaps:
   - Status: confirmed
 - `button`
   - Direction: machine -> client
-  - Payload: single object with `type` and `time_since_last_event`
+  - Payload: array-wrapped single object: `[{ type, time_since_last_event }]`
   - Observed `type` values: `ENCODER_PRESSED`, `ENCODER_RELEASED`, `ENCODER_PUSH`
   - Status: confirmed
 - `status`
   - Direction: machine -> client
   - Payload:
-    single object with `name`, compact `sensors`, `setpoints`, `time`,
-    `profile`, `profile_time`, `state`, and `id`
+    array-wrapped single object: `[{ name, status, state, sensors, setpoints, time, profile, loaded_profile, profile_time, id }]`
   - Status: confirmed
 - `sensors`
   - Direction: machine -> client
   - Payload:
-    single object with compact telemetry keys such as `t_ext_1`, `t_tube`,
-    `p`, `m_pos`, `m_spd`, `bh_pwr`, and `w_stat`
+    array-wrapped single object: `[{ t_ext_1, t_tube, p, m_pos, m_spd, bh_pwr, w_stat, ... }]`
   - Status: confirmed
 
 ---
@@ -184,6 +182,11 @@ Current gaps:
 ```ts
 interface SocketStatusPayload {
   name: string;
+  status: string;
+  state: string;
+  profile: string;
+  loaded_profile?: string;
+  id?: string;
   sensors: {
     p: number;
     f: number;
@@ -195,12 +198,7 @@ interface SocketStatusPayload {
     active: string | null;
   };
   time: number;
-  profile: string;
   profile_time: number;
-  state: string;
-  extracting: boolean;
-  loaded_profile?: string;
-  id?: string;
 }
 
 interface SocketButtonPayload {

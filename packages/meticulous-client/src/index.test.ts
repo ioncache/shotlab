@@ -394,7 +394,7 @@ describe('MeticulousClient', () => {
 
     expect(connectSocketIo).toHaveBeenCalledWith({
       baseUrl: 'http://machine.local:8080',
-      onAny: undefined,
+      onStateChange: undefined,
     });
   });
 

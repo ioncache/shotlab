@@ -3,6 +3,7 @@ import {
   Alert,
   Box,
   Button,
+  ButtonBase,
   Card,
   CardContent,
   Chip,
@@ -1306,7 +1307,7 @@ function DebugSectionHeading(props: DebugSectionHeadingProps) {
 
 function DebugSocketGroupCard(props: DebugSocketGroupCardProps) {
   return (
-    <Box
+    <ButtonBase
       onClick={props.onClick}
       sx={{
         border: '1px solid',
@@ -1318,6 +1319,8 @@ function DebugSocketGroupCard(props: DebugSocketGroupCardProps) {
         minWidth: 0,
         px: 1.25,
         py: 1,
+        textAlign: 'left',
+        width: '100%',
       }}
     >
       <Stack spacing={0.5}>
@@ -1353,7 +1356,7 @@ function DebugSocketGroupCard(props: DebugSocketGroupCardProps) {
           {props.group.payloadPreview}
         </Typography>
       </Stack>
-    </Box>
+    </ButtonBase>
   );
 }
 
@@ -1386,7 +1389,7 @@ function DebugSocketPacketList(props: DebugSocketPacketListProps) {
 
 function DebugSocketPacketSummary(props: DebugSocketPacketSummaryProps) {
   return (
-    <Box
+    <ButtonBase
       onClick={props.onClick}
       sx={{
         border: '1px solid',
@@ -1397,6 +1400,8 @@ function DebugSocketPacketSummary(props: DebugSocketPacketSummaryProps) {
         cursor: 'pointer',
         px: 1.25,
         py: 1,
+        textAlign: 'left',
+        width: '100%',
       }}
     >
       <Typography variant="body2">{props.packet.receivedAt}</Typography>
@@ -1405,7 +1410,7 @@ function DebugSocketPacketSummary(props: DebugSocketPacketSummaryProps) {
           ? `raw machine time: ${props.packet.rawMachineTime}`
           : 'raw machine time unavailable'}
       </Typography>
-    </Box>
+    </ButtonBase>
   );
 }
 
@@ -1585,7 +1590,7 @@ function patchMachineFromSensorsEvent(
     return machine;
   }
 
-  if (readNumberValue(machine.weight) !== undefined) {
+  if (readNumberValue(machine.weight) === nextWeight) {
     return machine;
   }
 
@@ -1852,12 +1857,16 @@ function readStoredBoolean(key: string, fallback: boolean): boolean {
     return fallback;
   }
 
-  const value = window.localStorage.getItem(key);
-  if (value === '1') {
-    return true;
-  }
-  if (value === '0') {
-    return false;
+  try {
+    const value = window.localStorage.getItem(key);
+    if (value === '1') {
+      return true;
+    }
+    if (value === '0') {
+      return false;
+    }
+  } catch {
+    return fallback;
   }
 
   return fallback;
@@ -1868,7 +1877,11 @@ function writeStoredBoolean(key: string, value: boolean): void {
     return;
   }
 
-  window.localStorage.setItem(key, value ? '1' : '0');
+  try {
+    window.localStorage.setItem(key, value ? '1' : '0');
+  } catch {
+    return;
+  }
 }
 
 function ChartSkeleton() {

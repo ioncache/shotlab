@@ -48,12 +48,14 @@ export async function connectSocketIo(
   socket.on('disconnect', () => {
     state.connected = false;
     state.error = undefined;
+    state.socketId = undefined;
     state.transport = socket.io.engine.transport.name;
     emitState();
   });
   socket.on('connect_error', (error: Error) => {
     state.connected = false;
     state.error = error.message;
+    state.socketId = undefined;
     state.transport = socket.io.engine.transport.name;
     emitState();
   });

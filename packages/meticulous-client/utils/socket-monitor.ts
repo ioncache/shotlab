@@ -6,6 +6,9 @@ const DEFAULT_DEPTH_LIMIT = 3;
 
 function normalizeMachineBaseUrl(baseUrl: string): string {
   const url = new URL(baseUrl);
+  if (url.search || url.hash) {
+    throw new Error('baseUrl must not include a query string or fragment');
+  }
   const pathname = url.pathname.replace(/\/+$/, '');
 
   if (pathname.endsWith('/api/v1')) {
@@ -13,9 +16,6 @@ function normalizeMachineBaseUrl(baseUrl: string): string {
   } else {
     url.pathname = pathname || '/';
   }
-
-  url.search = '';
-  url.hash = '';
 
   return url.toString().replace(/\/+$/, '');
 }

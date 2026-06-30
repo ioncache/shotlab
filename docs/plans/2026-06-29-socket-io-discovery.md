@@ -17,14 +17,8 @@ This branch covers:
 - capturing real event names and raw payload shapes
 - adding a low-level socket connection API in `@shotlab/meticulous-client`
 - adding opt-in integration tests that observe socket traffic without starting a brew
+- wiring the dashboard to use the confirmed socket stream for live cards and safe actions
 - documenting confirmed behavior in the protocol docs and package README
-
-This branch does **not** cover:
-
-- live dashboard wiring
-- brewing controls over socket
-- profile execution logic
-- final shared domain modeling for every socket payload
 
 ---
 
@@ -83,7 +77,7 @@ This branch does **not** cover:
 **Exit criteria**
 
 - the implementation target is explicitly limited to discovery and low-level client support
-- no dashboard work is mixed into this branch
+- any dashboard work stays tied to confirmed socket behavior rather than speculative abstractions
 
 ---
 
@@ -111,7 +105,7 @@ This branch does **not** cover:
 ## Task 3: Add A Minimal Low-Level Socket Client API
 
 - [x] Extend `packages/meticulous-client/src/index.ts` with the smallest useful socket surface.
-- [ ] Keep the first version low-level, something in this shape:
+- [x] Keep the first version low-level, something in this shape:
 
 ```ts
 export interface MeticulousSocketEvent {
@@ -199,8 +193,8 @@ yarn workspace @shotlab/meticulous-client test:integration:socket
   - observed event names
   - representative payload notes
 - [x] Keep payload documentation honest:
-  - confirmed names only
-  - representative fields only when observed
+  - confirmed names
+  - representative fields when observed
   - unknown fields remain unknown
 - [x] Update `packages/meticulous-client/README.md` with the new socket API usage.
 - [x] Note any intentionally unresolved questions that remain after this branch.
@@ -223,7 +217,7 @@ yarn workspace @shotlab/meticulous-client test:integration:socket
 
 Current gap:
 
-- only idle socket traffic is documented so far; safe-action event bursts still need sampling before the roadmap step should be checked off
+- the branch documents idle telemetry and safe button/preheat traffic, but active-brew event sampling is still incomplete
 
 ---
 
@@ -231,7 +225,7 @@ Current gap:
 
 - [x] unit tests for the socket client surface pass
 - [x] real-machine socket integration test passes
-- [ ] `yarn workspace @shotlab/meticulous-client build`
+- [x] `yarn workspace @shotlab/meticulous-client build`
 - [x] `yarn workspace @shotlab/meticulous-client test`
 - [x] updated docs match the real observed machine behavior
 
@@ -249,9 +243,9 @@ Current gap:
 
 - `GET /settings` includes `heating_timeout`, which should drive the temporary preheat countdown label in the dashboard instead of inferring a timer from socket events.
 - `GET /profile/last` returns a wrapper object with `load_time` and nested `profile`; it is not a bare profile object.
-- `GET /profile/list` returns rich profile objects with metadata such as `name`, `id`, `author`, `author_id`, `previous_authors`, `display`, `temperature`, `final_weight`, `variables`, and `last_changed`.
-- `GET /machine` returns machine identity/build fields such as `name`, `hostname`, `serial`, `firmware`, `software_version`, `image_version`, `image_build_channel`, `build_date`, and nested `repository_info`.
-- `GET /history/last` returns a shot envelope with keys such as `id`, `db_key`, `time`, `file`, `name`, nested `data[]` points, and nested `profile` metadata.
+- `GET /profile/list` yields rich profile objects with metadata such as `name`, `id`, `author`, `author_id`, `previous_authors`, `display`, `temperature`, `final_weight`, `variables`, and `last_changed`.
+- `GET /machine` provides machine identity/build fields such as `name`, `hostname`, `serial`, `firmware`, `software_version`, `image_version`, `image_build_channel`, `build_date`, and nested `repository_info`.
+- `GET /history/last` gives a shot envelope with keys such as `id`, `db_key`, `time`, `file`, `name`, nested `data[]` points, and nested `profile` metadata.
 - `GET /history/last.data[]` points include nested `shot`, `sensors`, `time`, `profile_time`, and `status` fields; the `shot.setpoints` object is part of the observed payload.
 
 ---
@@ -306,34 +300,34 @@ The current debug drawer is good enough to prove the socket is alive, but not go
 - whether the main dashboard needs a second sampled or debounced live-data path separate from the raw debug view
 - tests for this drawer behavior
 
-This is intentionally a dashboard follow-up to the discovery branch, not a reason to widen the low-level `@shotlab/meticulous-client` API before the event surface is actually understood.
+This now reflects the implemented debug drawer behavior in this branch. It remains intentionally narrow: the drawer reuses confirmed socket traffic without widening the low-level `@shotlab/meticulous-client` API beyond observed event shapes.
 
 ---
 
-## Live Dashboard Cards Follow-Up
+## Implemented Live Dashboard Wiring
 
-The dashboard now has enough confirmed socket evidence to begin using the live stream for the machine-status cards. This branch will keep the original REST calls only for bootstrap, then treat socket events as the live source of truth for the card state.
+The dashboard now uses the original REST calls only for bootstrap, then treats confirmed socket events as the live source of truth for the machine-status cards and safe action feedback.
 
-### Scope
+### Dashboard Scope
 
-This follow-up covers:
+This implementation covers:
 
 - one shared socket connection owned by `App`
 - patching live dashboard state from confirmed socket events
 - updating the existing machine-status cards from live socket-backed state
 - moving the debug drawer to consume the shared socket event stream instead of owning its own connection
+- wiring the Tare and Preheat buttons to the existing REST actions while the live socket stream updates the visible state
 
-This follow-up does not cover:
+This implementation does not cover:
 
 - live idle chart updates
 - live brew chart updates
 - automatic REST refresh if the socket disconnects and cannot recover
-- action wiring for dashboard buttons
 - speculative normalization of every socket payload
 
 ### Confirmed Event Inputs
 
-The live card wiring may use these confirmed events:
+The live card wiring uses these confirmed events where they have a clear owner:
 
 - `status`
 - `sensors`

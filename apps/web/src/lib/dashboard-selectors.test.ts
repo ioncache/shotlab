@@ -5,6 +5,11 @@ import {
   selectLiveCards,
 } from './dashboard-selectors';
 
+const timestampFormatter = new Intl.DateTimeFormat(undefined, {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+});
+
 describe('selectLiveCards', () => {
   it('returns fallback labels when machine fields are missing', () => {
     expect(selectLiveCards({}, {}, {})).toEqual([
@@ -54,7 +59,7 @@ describe('selectHistoryShots', () => {
       }),
     ).toEqual([
       {
-        brewedAt: 'Jun 28, 2026, 7:12 AM',
+        brewedAt: timestampFormatter.format(new Date('2026-06-28T11:12:13.000Z')),
         doseGrams: 18,
         durationSeconds: 31,
         id: 'shot-1',
