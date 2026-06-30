@@ -42,7 +42,7 @@
     "yaml-lint": "^1.7.0"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "volta": {
     "node": "24.16.0",

@@ -6,6 +6,7 @@ Reusable TypeScript client for the Meticulous Espresso Machine protocol.
 
 ```ts
 import {
+  connectSocket,
   createMeticulousClient,
   METICULOUS_ACTIONS,
 } from '@shotlab/meticulous-client';
@@ -20,6 +21,15 @@ const lastHistory = await client.getLastHistory();
 const lastProfile = await client.getLastProfile();
 await client.tare();
 await client.triggerAction(METICULOUS_ACTIONS.PREHEAT);
+
+const connection = await connectSocket({
+  baseUrl: 'http://<machine-ip>:8080',
+  onAny: (event) => {
+    console.log(event.event, event.payload);
+  },
+});
+
+await connection.close();
 ```
 
 Implemented endpoints:
@@ -48,6 +58,14 @@ Read-only verification:
 METICULOUS_RUN_INTEGRATION=1 \
 METICULOUS_BASE_URL=http://<machine-ip>:8080 \
 yarn workspace @shotlab/meticulous-client test:integration
+```
+
+Socket discovery verification:
+
+```bash
+METICULOUS_RUN_INTEGRATION=1 \
+METICULOUS_BASE_URL=http://<machine-ip>:8080 \
+yarn workspace @shotlab/meticulous-client test:integration:socket
 ```
 
 Guarded write verification:

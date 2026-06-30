@@ -14,13 +14,13 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@shotlab/meticulous-client": "workspace:*",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^9.1.1",
     "@mui/material": "^9.1.2",
     "@mui/system": "^9.1.2",
     "@mui/x-charts": "^9.7.0",
+    "@shotlab/meticulous-client": "workspace:*",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },

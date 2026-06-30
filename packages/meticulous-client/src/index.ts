@@ -1,3 +1,5 @@
+import { connectSocketIo } from './socket-io-client.js';
+
 export type JsonObject = Record<string, unknown>;
 export type JsonArray = unknown[];
 
@@ -6,17 +8,172 @@ export interface MeticulousClientOptions {
   fetch?: typeof fetch;
 }
 
-export type MachineInfo = JsonObject;
-export type Profile = JsonObject;
-export type Settings = JsonObject;
+export interface ConnectMeticulousSocketOptions {
+  baseUrl: string;
+  onAny?: (event: MeticulousSocketEvent) => void;
+  onStateChange?: (state: MeticulousSocketState) => void;
+}
+
+export interface RepositoryRevision {
+  branch?: string | null;
+  commit?: string | null;
+}
+
+export type RepositoryInfo = Record<string, RepositoryRevision>;
+
+export interface MachineInfo {
+  batch_number?: string;
+  build_date?: string;
+  color?: string;
+  firmware?: string;
+  hostname?: string;
+  image_build_channel?: string;
+  image_version?: string;
+  mainVoltage?: number;
+  manufacturing?: boolean;
+  name?: string;
+  repository_info?: RepositoryInfo;
+  serial?: string;
+  software_version?: string;
+  upgrade_first_boot?: boolean;
+  version_history?: string[];
+}
+
+export interface ProfileDisplay {
+  accentColor?: string;
+  description?: string;
+  image?: string;
+  shortDescription?: string;
+}
+
+export interface ProfileAuthorReference {
+  author_id?: string;
+  name?: string;
+  profile_id?: string;
+}
+
+export interface ProfileVariable {
+  key?: string;
+  name?: string;
+  type?: string;
+  value?: number | string;
+}
+
+export interface ProfileDynamics {
+  interpolation?: string;
+  over?: string;
+  points?: Array<[number, number | string]>;
+}
+
+export interface ProfileTrigger {
+  comparison?: string;
+  relative?: boolean;
+  type?: string;
+  value?: number | string;
+}
+
+export interface ProfileLimit {
+  comparison?: string;
+  relative?: boolean;
+  type?: string;
+  value?: number | string;
+}
+
+export interface ProfileStage {
+  dynamics?: ProfileDynamics;
+  exit_triggers?: ProfileTrigger[];
+  key?: string;
+  limits?: ProfileLimit[];
+  name?: string;
+  type?: string;
+}
+
+export interface MachineProfile {
+  author?: string;
+  author_id?: string;
+  db_key?: number;
+  display?: ProfileDisplay;
+  final_weight?: number;
+  id?: string;
+  last_changed?: number;
+  name?: string;
+  previous_authors?: ProfileAuthorReference[];
+  stages?: ProfileStage[];
+  temperature?: number;
+  variables?: ProfileVariable[];
+}
+
+export interface LastProfileResponse {
+  load_time?: number;
+  profile?: MachineProfile;
+}
+export interface ReverseScrollingSettings {
+  home?: boolean;
+  keyboard?: boolean;
+  menus?: boolean;
+}
+
+export interface Settings {
+  allow_debug_sending?: boolean;
+  allow_legacy_json?: boolean;
+  allow_stage_skipping?: boolean;
+  auto_purge_after_shot?: boolean;
+  auto_start_shot?: boolean;
+  clock_format_24_hour?: boolean;
+  debug_shot_data_retention_days?: number;
+  disable_ui_features?: boolean;
+  disallow_firmware_flashing?: boolean;
+  enable_sounds?: boolean;
+  heat_on_boot?: boolean;
+  heating_timeout?: number;
+  hostname_override?: string | null;
+  idle_screen?: string;
+  partial_retraction?: number;
+  profile_order?: string[];
+  reverse_scrolling?: ReverseScrollingSettings;
+  ssh_enabled?: boolean;
+  telemetry_service_enabled?: boolean;
+  time_zone?: string;
+  timezone_sync?: string;
+  update_channel?: string;
+  usb_mode?: string;
+}
 export interface HistoryShotSensors extends JsonObject {
+  adc_0?: number;
+  adc_1?: number;
+  adc_2?: number;
+  adc_3?: number;
+  bandheater_current?: number;
+  bandheater_power?: number;
+  bar_down?: number;
+  bar_mid_down?: number;
+  bar_mid_up?: number;
+  bar_up?: number;
   external_1?: number;
   external_2?: number;
+  lam_temp?: number;
+  motor_current?: number;
+  motor_position?: number;
+  motor_power?: number;
+  motor_speed?: number;
+  motor_temp?: number;
+  motor_thermistor?: string;
+  pressure_sensor?: number;
+  tube?: number;
+  water_status?: boolean;
+  weight_prediction?: number;
+}
+export interface HistoryShotSetpoints {
+  active?: string | null;
+  flow?: number;
+  power?: number;
+  pressure?: number;
 }
 export interface HistoryShotMetrics extends JsonObject {
   flow?: number;
   gravimetric_flow?: number;
   pressure?: number;
+  setpoints?: HistoryShotSetpoints;
   weight?: number;
 }
 export interface HistoryPoint extends JsonObject {
@@ -29,14 +186,17 @@ export interface HistoryPoint extends JsonObject {
 export interface HistoryEntry extends JsonObject {
   brewed_at?: string;
   created_at?: string;
+  db_key?: number;
   data?: HistoryPoint[];
+  debug_file?: string | null;
   dose?: number;
   dose_grams?: number;
   duration?: number;
   duration_seconds?: number;
+  file?: string;
   id?: string;
   name?: string;
-  profile?: string;
+  profile?: string | MachineProfile;
   profile_name?: string;
   profile_title?: string;
   points?: JsonObject[];
@@ -70,20 +230,44 @@ export interface ListProfilesOptions {
   full?: boolean;
 }
 
+export interface MeticulousSocketEvent {
+  event: string;
+  payload: unknown[];
+}
+
+export interface MeticulousSocketConnection {
+  close(): Promise<void>;
+  getState(): MeticulousSocketState;
+  onAny(listener: (event: MeticulousSocketEvent) => void): void;
+}
+
+export interface MeticulousSocketState {
+  connected: boolean;
+  error?: string;
+  socketId?: string;
+  transport?: string;
+}
+
 export interface MeticulousClient {
   getCurrentHistory(): Promise<CurrentHistory>;
   getHistory(): Promise<HistoryResponse>;
   getLastHistory(): Promise<HistoryEntry>;
-  getLastProfile(): Promise<Profile>;
+  getLastProfile(): Promise<LastProfileResponse>;
   getMachine(): Promise<MachineInfo>;
-  getProfile(id: string): Promise<Profile>;
+  getProfile(id: string): Promise<MachineProfile>;
   getSettings(): Promise<Settings>;
-  listProfiles(options?: ListProfilesOptions): Promise<JsonArray>;
-  loadProfile(id: string): Promise<JsonObject>;
-  preheat(): Promise<JsonObject>;
+  listProfiles(options?: ListProfilesOptions): Promise<MachineProfile[]>;
+  loadProfile(id: string): Promise<ActionResult>;
+  preheat(): Promise<ActionResult>;
   tare(): Promise<void>;
-  triggerAction(name: string): Promise<JsonObject>;
+  triggerAction(name: string): Promise<ActionResult>;
   updateSettings(patch: JsonObject): Promise<Settings>;
+}
+
+export interface ActionResult {
+  action?: string;
+  id?: string;
+  ok?: boolean;
 }
 
 export class MeticulousHttpError extends Error {
@@ -100,6 +284,35 @@ export class MeticulousHttpError extends Error {
     this.status = response.status;
     this.statusText = response.statusText;
   }
+}
+
+export async function connectSocket(
+  options: ConnectMeticulousSocketOptions,
+): Promise<MeticulousSocketConnection> {
+  const socket = await connectSocketIo({
+    baseUrl: normalizeMachineBaseUrl(options.baseUrl),
+    onStateChange: options.onStateChange,
+  });
+  let closed = false;
+
+  if (options.onAny) {
+    socket.onAny(wrapSocketListener(options.onAny));
+  }
+
+  return {
+    close: async () => {
+      if (closed) {
+        return;
+      }
+
+      closed = true;
+      socket.close();
+    },
+    getState: () => socket.getState(),
+    onAny: (listener) => {
+      socket.onAny(wrapSocketListener(listener));
+    },
+  };
 }
 
 function actionPath(name: string): string {
@@ -150,28 +363,28 @@ export function createMeticulousClient(
     getCurrentHistory: () => get<CurrentHistory>('history/current'),
     getHistory: () => get<HistoryResponse>('history'),
     getLastHistory: () => get<HistoryEntry>('history/last'),
-    getLastProfile: () => get<Profile>('profile/last'),
+    getLastProfile: () => get<LastProfileResponse>('profile/last'),
     getMachine: () => get<MachineInfo>('machine'),
-    getProfile: (id) => get<Profile>(`profile/get/${encodeURIComponent(id)}`),
+    getProfile: (id) =>
+      get<MachineProfile>(`profile/get/${encodeURIComponent(id)}`),
     getSettings: () => get<Settings>('settings'),
     listProfiles: (listOptions) =>
-      get<JsonArray>(`profile/list${listOptions?.full ? '?full=true' : ''}`),
+      get<MachineProfile[]>(
+        `profile/list${listOptions?.full ? '?full=true' : ''}`,
+      ),
     loadProfile: (id) =>
-      get<JsonObject>(`profile/load/${encodeURIComponent(id)}`),
-    preheat: () => post<JsonObject>(actionPath(METICULOUS_ACTIONS.PREHEAT)),
+      get<ActionResult>(`profile/load/${encodeURIComponent(id)}`),
+    preheat: () => post<ActionResult>(actionPath(METICULOUS_ACTIONS.PREHEAT)),
     tare: async () => {
       await post(actionPath(METICULOUS_ACTIONS.TARE));
     },
-    triggerAction: (name) => post<JsonObject>(actionPath(name)),
+    triggerAction: (name) => post<ActionResult>(actionPath(name)),
     updateSettings: (patch) => postJson<Settings>('settings', patch),
   };
 }
 
 function normalizeApiBaseUrl(baseUrl: string): string {
-  const url = new URL(baseUrl);
-  if (url.search || url.hash) {
-    throw new Error('baseUrl must not include a query string or fragment');
-  }
+  const url = parseBaseUrl(baseUrl);
   const pathname = url.pathname.replace(/\/+$/, '');
 
   if (pathname.endsWith('/api/v1')) {
@@ -181,4 +394,34 @@ function normalizeApiBaseUrl(baseUrl: string): string {
   }
 
   return url.toString().replace(/\/+$/, '');
+}
+
+function normalizeMachineBaseUrl(baseUrl: string): string {
+  const url = parseBaseUrl(baseUrl);
+  const pathname = url.pathname.replace(/\/+$/, '');
+
+  if (pathname.endsWith('/api/v1')) {
+    url.pathname = pathname.slice(0, -'/api/v1'.length) || '/';
+  } else {
+    url.pathname = pathname || '/';
+  }
+
+  return url.toString().replace(/\/+$/, '');
+}
+
+function parseBaseUrl(baseUrl: string): URL {
+  const url = new URL(baseUrl);
+  if (url.search || url.hash) {
+    throw new Error('baseUrl must not include a query string or fragment');
+  }
+
+  return url;
+}
+
+function wrapSocketListener(
+  listener: (event: MeticulousSocketEvent) => void,
+): (event: string, ...payload: unknown[]) => void {
+  return (event, ...payload) => {
+    listener({ event, payload });
+  };
 }

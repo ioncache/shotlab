@@ -7,9 +7,9 @@ describe('loadDashboardSnapshot', () => {
       getHistory: vi.fn().mockResolvedValue({
         history: [{ id: 'shot-1', profile: 'Bloom', weights: [0, 1, 3] }],
       }),
-      getLastProfile: vi.fn().mockResolvedValue({ title: 'Bloom' }),
+      getLastProfile: vi.fn().mockResolvedValue({ profile: { title: 'Bloom' } }),
       getMachine: vi.fn().mockResolvedValue({ state: 'Idle' }),
-      getSettings: vi.fn().mockResolvedValue({ preheat: false, tare: false }),
+      getSettings: vi.fn().mockResolvedValue({ heating_timeout: 10 }),
     };
 
     await expect(loadDashboardSnapshot(client)).resolves.toEqual({
@@ -18,7 +18,6 @@ describe('loadDashboardSnapshot', () => {
         { label: 'Machine status', value: 'Idle' },
         { label: 'Weight', value: 'Unavailable' },
         { label: 'Last loaded profile', value: 'Bloom' },
-        { label: 'Pre-heat', value: 'Off' },
       ],
       machineStateLabel: 'Idle',
       selectedShotId: 'shot-1',

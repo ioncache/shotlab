@@ -5,6 +5,11 @@ import {
   selectLiveCards,
 } from './dashboard-selectors';
 
+const timestampFormatter = new Intl.DateTimeFormat(undefined, {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+});
+
 describe('selectLiveCards', () => {
   it('returns fallback labels when machine fields are missing', () => {
     expect(selectLiveCards({}, {}, {})).toEqual([
@@ -12,7 +17,6 @@ describe('selectLiveCards', () => {
       { label: 'Machine status', value: 'Unknown' },
       { label: 'Weight', value: 'Unavailable' },
       { label: 'Last loaded profile', value: 'Unavailable' },
-      { label: 'Pre-heat', value: 'Unknown' },
     ]);
   });
 
@@ -25,7 +29,7 @@ describe('selectLiveCards', () => {
           water_temperature: 93.4,
           weight: 0.2,
         },
-        { preheat: true, tare: false },
+        { heating_timeout: 10 },
         {},
       ),
     ).toEqual([
@@ -33,7 +37,6 @@ describe('selectLiveCards', () => {
       { label: 'Machine status', value: 'Idle' },
       { label: 'Weight', value: '0.2 g' },
       { label: 'Last loaded profile', value: 'Filter Bright 1' },
-      { label: 'Pre-heat', value: 'On' },
     ]);
   });
 });
@@ -56,7 +59,7 @@ describe('selectHistoryShots', () => {
       }),
     ).toEqual([
       {
-        brewedAt: '2026-06-28 11:12',
+        brewedAt: timestampFormatter.format(new Date('2026-06-28T11:12:13.000Z')),
         doseGrams: 18,
         durationSeconds: 31,
         id: 'shot-1',
@@ -105,47 +108,47 @@ describe('selectHistoryShots', () => {
       selectHistoryShots({
         history: [
           {
-            id: '356a135e-d842-4a64-b496-8c7f37d073b9',
-            name: 'Low Contact',
-            time: 1782647978.236253,
             data: [
               {
+                sensors: { external_1: 100.65 },
                 shot: {
                   flow: 2.58,
                   gravimetric_flow: 0,
                   pressure: 0,
                   weight: 0,
                 },
-                sensors: { external_1: 100.65 },
                 time: 2,
               },
               {
+                sensors: { external_1: 99.91 },
                 shot: {
                   flow: 15.76,
                   gravimetric_flow: 0.34,
                   pressure: 2.46,
                   weight: 4.13,
                 },
-                sensors: { external_1: 99.91 },
                 time: 1958,
               },
               {
+                sensors: { external_1: 99.84 },
                 shot: {
                   flow: 13.66,
                   gravimetric_flow: 1.33,
                   pressure: 3.12,
                   weight: 5.87,
                 },
-                sensors: { external_1: 99.84 },
                 time: 2193,
               },
             ],
+            id: '356a135e-d842-4a64-b496-8c7f37d073b9',
+            name: 'Low Contact',
+            time: 1782647978.236253,
           },
         ],
       }),
     ).toEqual([
       {
-        brewedAt: '2026-06-28 11:59',
+        brewedAt: 'Jun 28, 2026, 7:59 AM',
         doseGrams: null,
         durationSeconds: 2.193,
         id: '356a135e-d842-4a64-b496-8c7f37d073b9',
@@ -199,7 +202,6 @@ describe('selectHistoryShots', () => {
       { label: 'Machine status', value: 'Unknown' },
       { label: 'Weight', value: 'Unavailable' },
       { label: 'Last loaded profile', value: 'Italian' },
-      { label: 'Pre-heat', value: 'On' },
     ]);
   });
 
@@ -208,18 +210,18 @@ describe('selectHistoryShots', () => {
       selectHistoryShots({
         history: [
           {
-            id: 'shot-gap',
-            name: 'Gap Test',
             data: [
               {
-                shot: { flow: 2.1, pressure: 1.2, gravimetric_flow: 0.4, weight: 3.2 },
+                shot: { flow: 2.1, gravimetric_flow: 0.4, pressure: 1.2, weight: 3.2 },
                 time: 1000,
               },
               {
-                shot: { flow: 2.3, pressure: 1.3, gravimetric_flow: 0.5 },
+                shot: { flow: 2.3, gravimetric_flow: 0.5, pressure: 1.3 },
                 time: 2000,
               },
             ],
+            id: 'shot-gap',
+            name: 'Gap Test',
           },
         ],
       }),
@@ -269,7 +271,6 @@ describe('selectDashboardSnapshot', () => {
         { label: 'Machine status', value: 'Heating' },
         { label: 'Weight', value: 'Unavailable' },
         { label: 'Last loaded profile', value: 'Daily Driver' },
-        { label: 'Pre-heat', value: 'Unknown' },
       ],
       machineStateLabel: 'Heating',
       selectedShotId: 'shot-1',
