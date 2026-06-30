@@ -4,6 +4,8 @@ import { createMeticulousClient, MeticulousHttpError } from './index';
 
 describe('MeticulousClient', () => {
   afterEach(() => {
+    vi.resetModules();
+    vi.clearAllMocks();
     vi.unstubAllGlobals();
   });
 
@@ -222,7 +224,7 @@ describe('MeticulousClient', () => {
 
   it('fetches the last history entry', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ id: 'last-shot', data: [] }), {
+      new Response(JSON.stringify({ data: [], id: 'last-shot' }), {
         headers: { 'content-type': 'application/json' },
         status: 200,
       }),
@@ -244,7 +246,7 @@ describe('MeticulousClient', () => {
 
   it('fetches the last profile', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ id: 'last-profile' }), {
+      new Response(JSON.stringify({ profile: { id: 'last-profile' } }), {
         headers: { 'content-type': 'application/json' },
         status: 200,
       }),
@@ -255,7 +257,7 @@ describe('MeticulousClient', () => {
     });
 
     await expect(client.getLastProfile()).resolves.toEqual({
-      id: 'last-profile',
+      profile: { id: 'last-profile' },
     });
     expect(fetchImpl).toHaveBeenCalledWith(
       'http://machine.local:8080/api/v1/profile/last',
@@ -377,5 +379,71 @@ describe('MeticulousClient', () => {
     await client.getMachine().catch((error: unknown) => {
       expect(error).toBeInstanceOf(MeticulousHttpError);
     });
+  });
+
+  it('connects sockets from the normalized machine origin', async () => {
+    const close = vi.fn();
+    const onAny = vi.fn();
+    const connectSocketIo = vi.fn().mockResolvedValue({ close, onAny });
+
+    vi.doMock('./socket-io-client', () => ({ connectSocketIo }));
+
+    const { connectSocket } = await import('./index');
+
+    await connectSocket({ baseUrl: 'http://machine.local:8080/api/v1/' });
+
+    expect(connectSocketIo).toHaveBeenCalledWith({
+      baseUrl: 'http://machine.local:8080',
+      onAny: undefined,
+    });
+  });
+
+  it('forwards raw socket events through onAny', async () => {
+    const listeners: Array<(event: string, ...payload: unknown[]) => void> = [];
+    const close = vi.fn();
+    const connectSocketIo = vi.fn().mockResolvedValue({
+      close,
+      onAny: (listener: (event: string, ...payload: unknown[]) => void) => {
+        listeners.push(listener);
+      },
+    });
+
+    vi.doMock('./socket-io-client', () => ({ connectSocketIo }));
+
+    const { connectSocket } = await import('./index');
+    const received: Array<{ event: string; payload: unknown[] }> = [];
+
+    await connectSocket({
+      baseUrl: 'http://machine.local:8080',
+      onAny: (event) => {
+        received.push(event);
+      },
+    });
+
+    listeners[0]?.('status', { ready: true }, 42);
+
+    expect(received).toEqual([
+      { event: 'status', payload: [{ ready: true }, 42] },
+    ]);
+  });
+
+  it('closes the socket connection at most once', async () => {
+    const close = vi.fn();
+    const connectSocketIo = vi.fn().mockResolvedValue({
+      close,
+      onAny: vi.fn(),
+    });
+
+    vi.doMock('./socket-io-client', () => ({ connectSocketIo }));
+
+    const { connectSocket } = await import('./index');
+    const connection = await connectSocket({
+      baseUrl: 'http://machine.local:8080',
+    });
+
+    await connection.close();
+    await connection.close();
+
+    expect(close).toHaveBeenCalledTimes(1);
   });
 });

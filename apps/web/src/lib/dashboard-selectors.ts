@@ -2,6 +2,8 @@ import type {
   HistoryEntry,
   HistoryResponse,
   JsonObject,
+  LastProfileResponse,
+  Settings,
 } from '@shotlab/meticulous-client';
 import type {
   DashboardMetric,
@@ -12,16 +14,11 @@ import type {
 
 export function selectLiveCards(
   machine: JsonObject,
-  settings: JsonObject,
-  lastProfile: JsonObject,
+  settings: Settings,
+  lastProfile: LastProfileResponse,
 ): DashboardMetric[] {
   const profileObject = asObject(lastProfile.profile);
-  const machineStatus = readString(
-    machine,
-    'state',
-    'current_state',
-    'status',
-  );
+  const machineStatus = readMachineStatus(machine);
   const profile =
     readString(machine, 'profile', 'profile_title', 'loaded_profile') ??
     readString(lastProfile, 'title', 'name', 'profile_title', 'id') ??
@@ -51,12 +48,6 @@ export function selectLiveCards(
       label: 'Last loaded profile',
       value: profile ?? 'Unavailable',
     },
-    {
-      label: 'Pre-heat',
-      value:
-        readBoolean(settings, 'preheat', 'pre_heat', 'heat_on_boot') ??
-        'Unknown',
-    },
   ];
 }
 
@@ -70,20 +61,23 @@ export function selectHistoryShots(history: HistoryResponse): DashboardShot[] {
 
 export function selectDashboardSnapshot(
   machine: JsonObject,
-  settings: JsonObject,
+  settings: Settings,
   history: JsonObject,
-  lastProfile: JsonObject,
+  lastProfile: LastProfileResponse,
 ): DashboardSnapshot {
   const liveCards = selectLiveCards(machine, settings, lastProfile);
   const shots = selectHistoryShots(history);
 
   return {
     liveCards,
-    machineStateLabel:
-      readString(machine, 'state', 'current_state', 'status') ?? 'Unknown',
+    machineStateLabel: readMachineStatus(machine) ?? 'Unknown',
     selectedShotId: shots[0]?.id,
     shots,
   };
+}
+
+function readMachineStatus(machine: JsonObject): string | undefined {
+  return readString(machine, 'status', 'name', 'state', 'current_state');
 }
 
 function selectHistoryShot(row: HistoryEntry, index: number): DashboardShot | undefined {
@@ -243,20 +237,6 @@ function readNumberArray(value: JsonObject, ...keys: string[]): number[] {
   return [];
 }
 
-function readBoolean(
-  value: JsonObject,
-  ...keys: string[]
-): 'On' | 'Off' | undefined {
-  for (const key of keys) {
-    const candidate = value[key];
-    if (typeof candidate === 'boolean') {
-      return candidate ? 'On' : 'Off';
-    }
-  }
-
-  return undefined;
-}
-
 function readNullableNumber(value: JsonObject, ...keys: string[]): number | null {
   return readNumber(value, ...keys) ?? null;
 }
@@ -271,7 +251,10 @@ function formatTimestamp(value?: string): string {
     return 'Unknown time';
   }
 
-  return date.toISOString().slice(0, 16).replace('T', ' ');
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date);
 }
 
 function readEpochSeconds(value: JsonObject, ...keys: string[]): string | undefined {

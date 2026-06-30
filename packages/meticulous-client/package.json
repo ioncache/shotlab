@@ -27,8 +27,13 @@
     "test": "vitest run --config vitest.config.ts --passWithNoTests",
     "test:coverage": "vitest run --config vitest.config.ts --coverage --passWithNoTests",
     "test:integration": "vitest run --config vitest.integration.config.ts integration/read.integration.test.ts",
+    "test:integration:socket": "vitest run --config vitest.integration.config.ts integration/socket.integration.test.ts",
     "test:integration:write": "vitest run --config vitest.integration.config.ts integration/write.integration.test.ts",
-    "test:watch": "vitest --config vitest.config.ts"
+    "test:watch": "vitest --config vitest.config.ts",
+    "utils:socket-monitor": "node --experimental-strip-types ./utils/socket-monitor.ts"
+  },
+  "dependencies": {
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "@types/node": "^25.9.0",

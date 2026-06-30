@@ -121,7 +121,7 @@ Endpoint
 /socket.io/
 ```
 
-Handshake
+Connection flow
 
 ```http
 GET /socket.io/?EIO=4&transport=polling
@@ -131,52 +131,111 @@ Confirmed:
 
 - Engine.IO v4
 - Socket.IO v4
-- WebSocket upgrade supported
+- successful connection on the default namespace
+- polling first, then upgrade to WebSocket
+- no caller-side `/socket.io/` path handling required when using `connectSocket`
 
 ---
 
 ## Event Discovery
 
-Current approach:
+Confirmed idle events observed on June 29, 2026:
 
-```ts
-socket.onAny((event, payload) => {
-  console.log(event, payload);
-});
-```
+- `profileHover`
+- `button`
+- `status`
+- `sensors`
 
-Record events while:
+Current gaps:
 
-- Idle
-- Heating
-- Taring
-- Loading profile
-- Starting shot
-- Pulling shot
-- Stopping shot
-- Completing shot
+- safe-action event bursts have not been sampled yet
+- non-default namespaces have not been observed
 
 ---
 
 ## Event Catalogue
 
-| Event   | Direction | Payload | Status |
-| ------- | --------- | ------- | ------ |
-| _(TBD)_ |           |         |        |
+- `profileHover`
+  - Direction: machine -> client
+  - Payload: single object with `id`, `type`, and `from`; observed samples showed `type: "focus"` with `from: "backend"` and `from: "dial"`
+  - Status: confirmed
+- `button`
+  - Direction: machine -> client
+  - Payload: single object with `type` and `time_since_last_event`
+  - Observed `type` values: `ENCODER_PRESSED`, `ENCODER_RELEASED`, `ENCODER_PUSH`
+  - Status: confirmed
+- `status`
+  - Direction: machine -> client
+  - Payload:
+    single object with `name`, compact `sensors`, `setpoints`, `time`,
+    `profile`, `profile_time`, `state`, and `id`
+  - Status: confirmed
+- `sensors`
+  - Direction: machine -> client
+  - Payload:
+    single object with compact telemetry keys such as `t_ext_1`, `t_tube`,
+    `p`, `m_pos`, `m_spd`, `bh_pwr`, and `w_stat`
+  - Status: confirmed
 
 ---
 
 ## Payload Models
 
-To be documented as reverse engineering progresses.
-
-Example format:
-
 ```ts
-interface MachineStatus {
-  // TBD
+interface SocketStatusPayload {
+  name: string;
+  sensors: {
+    p: number;
+    f: number;
+    w: number;
+    t: number;
+    g: number;
+  };
+  setpoints: {
+    active: string | null;
+  };
+  time: number;
+  profile: string;
+  profile_time: number;
+  state: string;
+  extracting: boolean;
+  loaded_profile?: string;
+  id?: string;
+}
+
+interface SocketButtonPayload {
+  type: string;
+  time_since_last_event: number;
+}
+
+interface SocketSensorsPayload {
+  t_ext_1: number;
+  t_ext_2: number;
+  t_bar_up: number;
+  t_bar_mu: number;
+  t_bar_md: number;
+  t_bar_down: number;
+  t_tube: number;
+  t_motor_temp: number;
+  lam_temp: number;
+  p: number;
+  a_0: number;
+  a_1: number;
+  a_2: number;
+  a_3: number;
+  m_pos: number;
+  m_spd: number;
+  m_pwr: number;
+  m_cur: number;
+  bh_pwr: number;
+  bh_cur: number;
+  w_stat: boolean;
+  motor_temp: string;
+  weight_pred: number;
 }
 ```
+
+These are representative observed fields, not final exhaustive models.
 
 ---
 

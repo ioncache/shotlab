@@ -1,5 +1,9 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { createMeticulousClient, type MeticulousClient } from '../src/index';
+import {
+  createMeticulousClient,
+  type MachineProfile,
+  type MeticulousClient,
+} from '../src/index';
 import { readIntegrationConfig } from '../src/integration-config';
 
 type ReadClient = Pick<
@@ -24,7 +28,7 @@ describeIfConfigured('Meticulous REST read endpoints', () => {
   const client = createMeticulousClient({
     baseUrl: integrationConfig.baseUrl ?? 'http://127.0.0.1:8080',
   }) as ReadClient;
-  let profiles: Array<Record<string, unknown>> = [];
+  let profiles: MachineProfile[] = [];
   let firstProfileId: string | undefined;
 
   beforeAll(async () => {
