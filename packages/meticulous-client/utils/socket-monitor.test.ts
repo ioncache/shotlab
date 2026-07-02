@@ -103,6 +103,21 @@ describe('normalizeMachineBaseUrl', () => {
 });
 
 describe('resolveRecordingPath', () => {
+  it('returns a cwd-relative match first', async () => {
+    const exists = vi.fn(async (path: string) => {
+      return path === '/tmp/session-1';
+    });
+
+    await expect(
+      resolveRecordingPath('session-1', {
+        cwd: '/tmp',
+        exists,
+        recordingsRoot: '/repo/packages/meticulous-client/recordings',
+        repoRoot: '/repo',
+      }),
+    ).resolves.toBe('/tmp/session-1');
+  });
+
   it('resolves repo-root-relative recording paths outside the repo root cwd', async () => {
     const exists = vi.fn(async (path: string) => {
       return path === '/repo/packages/meticulous-client/recordings/session-1';
@@ -116,6 +131,46 @@ describe('resolveRecordingPath', () => {
         repoRoot: '/repo',
       }),
     ).resolves.toBe('/repo/packages/meticulous-client/recordings/session-1');
+  });
+
+  it('falls back to the recordings root basename match', async () => {
+    const exists = vi.fn(async (path: string) => {
+      return path === '/repo/packages/meticulous-client/recordings/session-1';
+    });
+
+    await expect(
+      resolveRecordingPath('nested/path/session-1', {
+        cwd: '/tmp',
+        exists,
+        recordingsRoot: '/repo/packages/meticulous-client/recordings',
+        repoRoot: '/repo',
+      }),
+    ).resolves.toBe('/repo/packages/meticulous-client/recordings/session-1');
+  });
+
+  it('returns absolute paths unchanged when they exist', async () => {
+    const exists = vi.fn(async (path: string) => {
+      return path === '/abs/session-1';
+    });
+
+    await expect(
+      resolveRecordingPath('/abs/session-1', {
+        exists,
+      }),
+    ).resolves.toBe('/abs/session-1');
+  });
+
+  it('defaults to the cwd-relative path when no candidates exist', async () => {
+    const exists = vi.fn(async () => false);
+
+    await expect(
+      resolveRecordingPath('session-1', {
+        cwd: '/tmp',
+        exists,
+        recordingsRoot: '/repo/packages/meticulous-client/recordings',
+        repoRoot: '/repo',
+      }),
+    ).resolves.toBe('/tmp/session-1');
   });
 });
 
@@ -149,6 +204,28 @@ describe('runCli', () => {
         null,
         2,
       ),
+    );
+  });
+
+  it('logs a clean monitor connection error instead of throwing', async () => {
+    const logger = {
+      info: vi.fn(),
+    };
+
+    await expect(
+      runCli(['monitor', 'http://machine.local:8080'], {
+        connectSocketIo: vi.fn().mockRejectedValue(new Error('offline')),
+        createLogger: vi.fn().mockReturnValue(logger),
+        createTerminal: vi.fn().mockReturnValue(createFakeTerminal()),
+      }),
+    ).resolves.toBeUndefined();
+
+    expect(logger.info).toHaveBeenCalledWith(
+      {
+        command: 'monitor',
+        error: 'offline',
+      },
+      'monitor connect error',
     );
   });
 
@@ -237,6 +314,32 @@ describe('runCli', () => {
       'socket event',
     );
     expect(exitSpy).toHaveBeenCalledWith(0);
+  });
+
+  it('logs a clean record connection error instead of throwing', async () => {
+    const logger = {
+      info: vi.fn(),
+    };
+
+    await expect(
+      runCli(['record', 'http://machine.local:8080'], {
+        connectSocketIo: vi.fn().mockRejectedValue(new Error('offline')),
+        createLogger: vi.fn().mockReturnValue(logger),
+        createRecordingSessionDir: vi
+          .fn()
+          .mockResolvedValue('/tmp/shot/session-1'),
+        createTerminal: vi.fn().mockReturnValue(createFakeTerminal()),
+      }),
+    ).resolves.toBeUndefined();
+
+    expect(logger.info).toHaveBeenCalledWith(
+      {
+        command: 'record',
+        error: 'offline',
+        sessionDir: '/tmp/shot/session-1',
+      },
+      'record connect error',
+    );
   });
 
   it('writes recording artifacts when a record session is interrupted', async () => {

@@ -7,6 +7,7 @@ import {
   buildConsoleHelpLines,
   buildConsolePanels,
   clearStreamLines,
+  computeConsoleLayout,
   createSocketConsoleState,
   parseConsoleCommand,
   setConnectionStatus,
@@ -322,5 +323,17 @@ describe('socket console state helpers', () => {
       width: 90,
     });
     expect(stripAnsi(panels.streamTitleRight ?? '')).toBe('Disconnected');
+  });
+
+  it('uses one shared console layout calculation', () => {
+    const state = createSocketConsoleState('http://machine.local:8080');
+
+    expect(computeConsoleLayout(state, { height: 30, width: 100 })).toEqual({
+      bottomHeight: 4,
+      bottomY: 26,
+      leftWidth: 33,
+      rightWidth: 66,
+      topHeight: 25,
+    });
   });
 });

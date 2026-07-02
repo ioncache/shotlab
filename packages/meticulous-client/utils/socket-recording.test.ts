@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -283,5 +283,34 @@ describe('summarizeRecordingDirectory', () => {
       lastReceivedAt: '2026-07-01T07:00:04.000Z',
       totalEntries: 3,
     });
+  });
+
+  it('throws a clear error when the recording file is missing', async () => {
+    const rootDir = await mkdtemp(join(tmpdir(), 'shotlab-recordings-'));
+    createdPaths.push(rootDir);
+
+    await expect(summarizeRecordingDirectory(rootDir)).rejects.toThrow(
+      `Failed to summarize recording at ${rootDir}`,
+    );
+  });
+
+  it('throws a clear error when the recording file is malformed', async () => {
+    const rootDir = await mkdtemp(join(tmpdir(), 'shotlab-recordings-'));
+    createdPaths.push(rootDir);
+
+    const sessionDir = await createRecordingSessionDir({
+      now: new Date('2026-07-01T07:00:00.000Z'),
+      rootDir,
+    });
+
+    await writeFile(
+      join(sessionDir, 'raw-events.jsonl'),
+      '{"kind":"event","event":"status"}\nnot-json\n',
+      'utf8',
+    );
+
+    await expect(summarizeRecordingDirectory(sessionDir)).rejects.toThrow(
+      `Failed to summarize recording at ${sessionDir}`,
+    );
   });
 });

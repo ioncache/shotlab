@@ -1,4 +1,5 @@
 import { access } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { basename, isAbsolute, resolve } from 'node:path';
 import process from 'node:process';
 import pino from 'pino';
@@ -14,9 +15,9 @@ import {
   appendStreamState,
   applySocketState,
   buildConsolePanels,
+  computeConsoleLayout,
   clearStreamLines,
   createSocketConsoleState,
-  getConsoleBottomHeight,
   parseConsoleCommand,
   popCommandCharacter,
   setConnectionStatus,
@@ -37,9 +38,10 @@ export const DEFAULT_SAMPLE_LIMIT = 3;
 export const DEFAULT_DEPTH_LIMIT = 3;
 const ANSI_ESCAPE_GLOBAL = new RegExp(String.raw`\u001B\[[0-9;]*m`, 'g');
 const ANSI_ESCAPE_START = new RegExp(String.raw`^\u001B\[[0-9;]*m`);
-const DEFAULT_RECORDINGS_ROOT = new URL('../recordings/', import.meta.url)
-  .pathname;
-const DEFAULT_REPO_ROOT = new URL('../../../', import.meta.url).pathname;
+const DEFAULT_RECORDINGS_ROOT = fileURLToPath(
+  new URL('../recordings/', import.meta.url),
+);
+const DEFAULT_REPO_ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 
 export type SocketCliCommand = 'console' | 'monitor' | 'record' | 'summarize';
 
@@ -130,12 +132,6 @@ export function parseCliArgs(argv: string[]): SocketCliArgs {
             type: 'string',
           }),
         ),
-      (args) => ({
-        baseUrl: args.baseUrl,
-        command: 'console' as const,
-        depthLimit: args.depth,
-        sampleLimit: args.samples,
-      }),
     )
     .command(
       'monitor <baseUrl>',
@@ -148,12 +144,6 @@ export function parseCliArgs(argv: string[]): SocketCliArgs {
             type: 'string',
           }),
         ),
-      (args) => ({
-        baseUrl: args.baseUrl,
-        command: 'monitor' as const,
-        depthLimit: args.depth,
-        sampleLimit: args.samples,
-      }),
     )
     .command(
       'record <baseUrl>',
@@ -176,14 +166,6 @@ export function parseCliArgs(argv: string[]): SocketCliArgs {
               type: 'string',
             }),
         ),
-      (args) => ({
-        baseUrl: args.baseUrl,
-        command: 'record' as const,
-        depthLimit: args.depth,
-        label: args.label,
-        out: args.out,
-        sampleLimit: args.samples,
-      }),
     )
     .command(
       'summarize <recordingPath>',
@@ -194,10 +176,6 @@ export function parseCliArgs(argv: string[]): SocketCliArgs {
           describe: 'Path to a saved recording directory',
           type: 'string',
         }),
-      (args) => ({
-        command: 'summarize' as const,
-        recordingPath: args.recordingPath,
-      }),
     )
     .demandCommand(1)
     .help(false)
@@ -342,11 +320,8 @@ function renderConsole(terminal: SocketTerminal, state: SocketConsoleState) {
     return;
   }
 
-  const bottomHeight = getConsoleBottomHeight(state);
-  const topHeight = Math.max(8, height - bottomHeight - 1);
-  const leftWidth = Math.max(24, Math.floor((width - 1) * 0.33));
-  const rightWidth = Math.max(24, width - leftWidth - 1);
-  const bottomY = topHeight + 1;
+  const { bottomHeight, bottomY, leftWidth, rightWidth, topHeight } =
+    computeConsoleLayout(state, { height, width });
 
   terminal.moveTo?.(1, 1);
   terminal.eraseDisplayBelow?.();
@@ -474,19 +449,32 @@ async function runMonitorCommand(
     'monitoring started',
   );
 
-  const connection = await dependencies.connectSocketIo({
-    baseUrl: normalizeMachineBaseUrl(args.baseUrl),
-    onStateChange: (state) => {
-      logger.info(
-        {
-          command: 'monitor',
-          kind: 'state',
-          state,
-        },
-        'socket state',
-      );
-    },
-  });
+  let connection: Awaited<ReturnType<typeof dependencies.connectSocketIo>>;
+
+  try {
+    connection = await dependencies.connectSocketIo({
+      baseUrl: normalizeMachineBaseUrl(args.baseUrl),
+      onStateChange: (state) => {
+        logger.info(
+          {
+            command: 'monitor',
+            kind: 'state',
+            state,
+          },
+          'socket state',
+        );
+      },
+    });
+  } catch (error) {
+    logger.info(
+      {
+        command: 'monitor',
+        error: error instanceof Error ? error.message : String(error),
+      },
+      'monitor connect error',
+    );
+    return;
+  }
 
   connection.onAny((eventName, ...payload) => {
     logger.info(
@@ -796,28 +784,42 @@ async function runRecordCommand(
     'recording started',
   );
 
-  const connection = await dependencies.connectSocketIo({
-    baseUrl: normalizeMachineBaseUrl(args.baseUrl),
-    onStateChange: (state) => {
-      const receivedAt = new Date().toISOString();
-      const entry: RecordedSocketEntry = {
-        kind: 'state',
-        receivedAt,
-        receivedAtMs: Date.parse(receivedAt),
-        state,
-      };
+  let connection: Awaited<ReturnType<typeof dependencies.connectSocketIo>>;
 
-      entries.push(entry);
-      logger.info(
-        {
-          command: 'record',
+  try {
+    connection = await dependencies.connectSocketIo({
+      baseUrl: normalizeMachineBaseUrl(args.baseUrl),
+      onStateChange: (state) => {
+        const receivedAt = new Date().toISOString();
+        const entry: RecordedSocketEntry = {
           kind: 'state',
+          receivedAt,
+          receivedAtMs: Date.parse(receivedAt),
           state,
-        },
-        'socket state',
-      );
-    },
-  });
+        };
+
+        entries.push(entry);
+        logger.info(
+          {
+            command: 'record',
+            kind: 'state',
+            state,
+          },
+          'socket state',
+        );
+      },
+    });
+  } catch (error) {
+    logger.info(
+      {
+        command: 'record',
+        error: error instanceof Error ? error.message : String(error),
+        sessionDir,
+      },
+      'record connect error',
+    );
+    return;
+  }
 
   connection.onAny((eventName, ...payload) => {
     const receivedAt = new Date().toISOString();
@@ -903,6 +905,6 @@ export async function runCli(
   await runSummarizeCommand(args, resolvedDependencies);
 }
 
-if (import.meta.url === new URL(process.argv[1] ?? '', 'file:').href) {
+if (import.meta.main) {
   await runCli(hideBin(process.argv));
 }

@@ -64,6 +64,14 @@ type ConsoleSize = {
   width: number;
 };
 
+export type ConsoleLayout = {
+  bottomHeight: number;
+  bottomY: number;
+  leftWidth: number;
+  rightWidth: number;
+  topHeight: number;
+};
+
 const chalk = new Chalk({ level: 3 });
 
 const MAX_OUTPUT_LINES = 1;
@@ -283,10 +291,8 @@ export function buildConsolePanels(
   state: SocketConsoleState,
   size: ConsoleSize,
 ): ConsolePanels {
-  const bottomHeight = getConsoleBottomHeight(state);
-  const leftWidth = Math.max(24, Math.floor(size.width * 0.33));
-  const rightWidth = Math.max(24, size.width - leftWidth - 1);
-  const topHeight = Math.max(8, size.height - bottomHeight - 1);
+  const { bottomHeight, leftWidth, rightWidth, topHeight } =
+    computeConsoleLayout(state, size);
 
   if (state.helpOverlay) {
     return {
@@ -317,6 +323,24 @@ export function buildConsolePanels(
     ),
     streamTitleRight: formatConnectionStatus(state.connectionStatus),
     summaryLines: fitLines(buildSummaryLines(state), leftWidth, topHeight),
+  };
+}
+
+export function computeConsoleLayout(
+  state: SocketConsoleState,
+  size: ConsoleSize,
+): ConsoleLayout {
+  const bottomHeight = getConsoleBottomHeight(state);
+  const leftWidth = Math.max(24, Math.floor(size.width * 0.33));
+  const rightWidth = Math.max(24, size.width - leftWidth - 1);
+  const topHeight = Math.max(8, size.height - bottomHeight - 1);
+
+  return {
+    bottomHeight,
+    bottomY: topHeight + 1,
+    leftWidth,
+    rightWidth,
+    topHeight,
   };
 }
 

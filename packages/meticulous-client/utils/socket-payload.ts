@@ -6,24 +6,22 @@ const finiteNumberSchema = z.preprocess(
   z.number().finite().optional(),
 );
 
-const sensorsSchema = z
-  .object({
-    p: finiteNumberSchema,
-    t: finiteNumberSchema,
-    w: finiteNumberSchema,
-  })
-  .passthrough();
+const coreMetricFields = {
+  p: finiteNumberSchema,
+  t: finiteNumberSchema,
+  w: finiteNumberSchema,
+};
+
+const sensorsSchema = z.object(coreMetricFields).passthrough();
 
 const payloadObjectSchema = z
   .object({
-    p: finiteNumberSchema,
+    ...coreMetricFields,
     profile_time: finiteNumberSchema,
     sensors: sensorsSchema.optional(),
-    t: finiteNumberSchema,
     t_ext_1: finiteNumberSchema,
     t_tube: finiteNumberSchema,
     time: finiteNumberSchema,
-    w: finiteNumberSchema,
     weight_pred: finiteNumberSchema,
   })
   .passthrough();

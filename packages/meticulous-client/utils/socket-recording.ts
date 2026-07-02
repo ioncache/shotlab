@@ -112,35 +112,41 @@ export async function writeRecordingArtifacts(
 export async function summarizeRecordingDirectory(
   recordingDir: string,
 ): Promise<RecordingSummary> {
-  const rawEvents = await readFile(
-    join(recordingDir, 'raw-events.jsonl'),
-    'utf8',
-  );
-  const entries = rawEvents
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0)
-    .map((line) => JSON.parse(line) as RecordedSocketEntry);
+  try {
+    const rawEvents = await readFile(
+      join(recordingDir, 'raw-events.jsonl'),
+      'utf8',
+    );
+    const entries = rawEvents
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .map((line) => JSON.parse(line) as RecordedSocketEntry);
 
-  const eventCounts = Object.fromEntries(
-    entries
-      .filter(isEventEntry)
-      .reduce((counts, entry) => {
-        counts.set(entry.event, (counts.get(entry.event) ?? 0) + 1);
-        return counts;
-      }, new Map<string, number>())
-      .entries()
-      .toArray()
-      .toSorted(([left], [right]) => left.localeCompare(right)),
-  );
+    const eventCounts = Object.fromEntries(
+      entries
+        .filter(isEventEntry)
+        .reduce((counts, entry) => {
+          counts.set(entry.event, (counts.get(entry.event) ?? 0) + 1);
+          return counts;
+        }, new Map<string, number>())
+        .entries()
+        .toArray()
+        .toSorted(([left], [right]) => left.localeCompare(right)),
+    );
 
-  return {
-    eventCounts,
-    eventNames: Object.keys(eventCounts),
-    firstReceivedAt: entries[0]?.receivedAt,
-    lastReceivedAt: entries.at(-1)?.receivedAt,
-    totalEntries: entries.length,
-  };
+    return {
+      eventCounts,
+      eventNames: Object.keys(eventCounts),
+      firstReceivedAt: entries[0]?.receivedAt,
+      lastReceivedAt: entries.at(-1)?.receivedAt,
+      totalEntries: entries.length,
+    };
+  } catch (error) {
+    throw new Error(`Failed to summarize recording at ${recordingDir}`, {
+      cause: error,
+    });
+  }
 }
 
 function normalizeTimelineEntries(
