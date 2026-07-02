@@ -9,6 +9,6 @@ export default mergeConfig(baseConfig, {
     },
   },
   test: {
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'utils/**/*.test.ts'],
   },
 });

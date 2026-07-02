@@ -1,4 +1,26 @@
 import { connectSocketIo } from './socket-io-client.js';
+import type {
+  LiveButtonEventPayload,
+  LiveHeaterStatusEventPayload,
+  LiveProfileEventPayload,
+  LiveProfileHoverEventPayload,
+  LiveSensorsEventPayload,
+  LiveSettingsEventPayload,
+  LiveStatusEventPayload,
+  MachinePhaseSetpoints,
+} from './socket-types.js';
+
+export type {
+  BrewCoreMetrics,
+  LiveButtonEventPayload,
+  LiveHeaterStatusEventPayload,
+  LiveProfileEventPayload,
+  LiveProfileHoverEventPayload,
+  LiveSensorsEventPayload,
+  LiveSettingsEventPayload,
+  LiveStatusEventPayload,
+  MachinePhaseSetpoints,
+} from './socket-types.js';
 
 export type JsonObject = Record<string, unknown>;
 export type JsonArray = unknown[];
@@ -163,12 +185,7 @@ export interface HistoryShotSensors extends JsonObject {
   water_status?: boolean;
   weight_prediction?: number;
 }
-export interface HistoryShotSetpoints {
-  active?: string | null;
-  flow?: number;
-  power?: number;
-  pressure?: number;
-}
+export type HistoryShotSetpoints = MachinePhaseSetpoints;
 export interface HistoryShotMetrics extends JsonObject {
   flow?: number;
   gravimetric_flow?: number;
@@ -230,10 +247,22 @@ export interface ListProfilesOptions {
   full?: boolean;
 }
 
-export interface MeticulousSocketEvent {
-  event: string;
-  payload: unknown[];
+export interface MeticulousSocketEvent<
+  TEvent extends string = string,
+  TPayload extends unknown[] = unknown[],
+> {
+  event: TEvent;
+  payload: TPayload;
 }
+
+export type KnownMeticulousSocketEvent =
+  | MeticulousSocketEvent<'button', [LiveButtonEventPayload]>
+  | MeticulousSocketEvent<'heater_status', [LiveHeaterStatusEventPayload]>
+  | MeticulousSocketEvent<'profile', [LiveProfileEventPayload]>
+  | MeticulousSocketEvent<'profileHover', [LiveProfileHoverEventPayload]>
+  | MeticulousSocketEvent<'sensors', [LiveSensorsEventPayload]>
+  | MeticulousSocketEvent<'settings', [LiveSettingsEventPayload]>
+  | MeticulousSocketEvent<'status', [LiveStatusEventPayload]>;
 
 export interface MeticulousSocketConnection {
   close(): Promise<void>;
