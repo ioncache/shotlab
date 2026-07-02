@@ -69,6 +69,7 @@ graphify-out
 # Worktrees
 .worktrees/
 worktrees/
+packages/meticulous-client/recordings/
 
 # Misc
 .dccache
