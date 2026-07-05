@@ -170,14 +170,14 @@ This branch does **not** cover:
 
 ## Task 5: Extract The Live Telemetry Mapper Out Of `app.tsx`
 
-- [ ] Create `apps/web/src/lib/live-telemetry.ts`.
-- [ ] Move the current socket patching helpers there rather than inventing a second path:
+- [x] Create `apps/web/src/lib/live-telemetry.ts`.
+- [x] Move the current socket patching helpers there rather than inventing a second path:
   - `applyLiveSocketEvent`
   - `patchMachineFromStatusEvent`
   - `patchMachineFromSensorsEvent`
   - `patchSettingsFromSettingsEvent`
   - `patchLastProfileFromProfileEvent`
-- [ ] Add the smallest new helper surface needed for this branch, likely in the shape of:
+- [x] Add the smallest new helper surface needed for this branch, likely in the shape of:
 
 ```ts
 export interface LiveTelemetryState {
@@ -192,10 +192,10 @@ export function applyLiveSocketEvent(
 ): LiveTelemetryState
 ```
 
-- [ ] Keep the source of truth boring:
+- [x] Keep the source of truth boring:
   - `status` events update machine/profile/session timing/core metrics
   - `sensors` events only backfill fields that `status` does not keep current enough
-- [ ] Do not create a class, reducer framework, or event bus here.
+- [x] Do not create a class, reducer framework, or event bus here.
 
 **Exit criteria**
 
@@ -273,25 +273,25 @@ export function applyLiveSocketEvent(
 
 ## Task 6: Build A Synthetic Live Shot That Reuses The Existing Chart Model
 
-- [ ] Extend `apps/web/src/lib/dashboard-types.ts` only as far as needed to distinguish a live shot from a history shot. Prefer a tiny discriminator over a second parallel type tree.
-- [ ] Build the live shot in `apps/web/src/lib/live-telemetry.ts` as a normal `DashboardShot`-shaped object with:
+- [x] Extend `apps/web/src/lib/dashboard-types.ts` only as far as needed to distinguish a live shot from a history shot. Prefer a tiny discriminator over a second parallel type tree.
+- [x] Build the live shot in `apps/web/src/lib/live-telemetry.ts` as a normal `DashboardShot`-shaped object with:
   - stable `id` such as `live-shot`
   - a `profile` label from the best confirmed live profile field
   - a `profileImage` URL when the active profile already exposes one
   - point rows appended from confirmed live metrics over `profile_time`
   - `durationSeconds` from the latest point time
   - `yieldGrams` from the latest trustworthy weight field
-- [ ] Keep point deduplication simple:
+- [x] Keep point deduplication simple:
   - if a new event does not advance the live timeline meaningfully, patch the latest point instead of appending a duplicate
   - otherwise append a new point
-- [ ] Reset or replace the live shot when the machine clearly returns to a non-brewing idle state and the session is no longer useful.
-- [ ] Reuse the existing chart fields:
+- [x] Reset or replace the live shot when the machine clearly returns to a non-brewing idle state and the session is no longer useful.
+- [x] Reuse the existing chart fields:
   - `pressure`
   - `flow`
   - `gravimetricFlow`
   - `weight`
   - `second`
-- [ ] Only add temperature to the selected-point details if it falls out cleanly from the existing model work.
+- [x] Only add temperature to the selected-point details if it falls out cleanly from the existing model work.
 
 **Exit criteria**
 
@@ -302,14 +302,14 @@ export function applyLiveSocketEvent(
 
 ## Task 7: Wire The Live Telemetry Into The Shared Source Model
 
-- [ ] Update `apps/web/src/app.tsx` to store the synthetic live shot alongside the existing machine/settings/profile state and the new chart-source state.
-- [ ] Keep live telemetry accumulation running in the background even while `History` is selected.
-- [ ] Feed the shared chart/details surface from the live shot when the active source is `Live` and the live shot has meaningful data.
-- [ ] Keep the `Live` source in standby when no live shot exists yet.
-- [ ] Detect the start of a new live session explicitly, using the smallest reliable session boundary already present in the confirmed telemetry.
-- [ ] Auto-switch the active source to `Live` when a **new** live session starts.
-- [ ] Do not let ongoing packets from the **current** live session override a manual switch to `History`. The source toggle remains the source of truth after that one-time session-start transition.
-- [ ] Preserve the existing live cards and debug drawer while moving the mapping code to the shared live-telemetry helper.
+- [x] Update `apps/web/src/app.tsx` to store the synthetic live shot alongside the existing machine/settings/profile state and the new chart-source state.
+- [x] Keep live telemetry accumulation running in the background even while `History` is selected.
+- [x] Feed the shared chart/details surface from the live shot when the active source is `Live` and the live shot has meaningful data.
+- [x] Keep the `Live` source in standby when no live shot exists yet.
+- [x] Detect the start of a new live session explicitly, using the smallest reliable session boundary already present in the confirmed telemetry.
+- [x] Auto-switch the active source to `Live` when a **new** live session starts.
+- [x] Do not let ongoing packets from the **current** live session override a manual switch to `History`. The source toggle remains the source of truth after that one-time session-start transition.
+- [x] Preserve the existing live cards and debug drawer while moving the mapping code to the shared live-telemetry helper.
 
 **Exit criteria**
 

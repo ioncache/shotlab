@@ -9,7 +9,6 @@ import {
   type JsonObject,
   type LastProfileResponse,
   type MachineProfile,
-  type MeticulousSocketEvent,
   type Settings,
 } from '@shotlab/meticulous-client';
 import { ActionsCard } from './components/ActionsCard';
@@ -25,6 +24,8 @@ import { readAppConfig } from './config';
 import { createDashboardClient } from './lib/create-dashboard-client';
 import { type ChartSource } from './lib/dashboard-display';
 import { selectDashboardSnapshot } from './lib/dashboard-selectors';
+import { type DashboardShot } from './lib/dashboard-types';
+import { applyLiveSocketEvent } from './lib/live-telemetry';
 import {
   findProfileIdByReference,
   readProfileId,
@@ -43,12 +44,6 @@ import {
 } from './lib/socket-debug';
 
 const DEBUG_SOCKET_FLUSH_INTERVAL_MS = 250;
-
-interface LiveSocketState {
-  lastProfile: LastProfileResponse;
-  machine: JsonObject;
-  settings: Settings;
-}
 
 interface LoadState {
   history: boolean;
@@ -91,6 +86,7 @@ export function App() {
   const [history, setHistory] = useState<HistoryResponse>(emptyHistory);
   const [lastProfile, setLastProfile] =
     useState<LastProfileResponse>(emptyLastProfile);
+  const [liveShot, setLiveShot] = useState<DashboardShot | undefined>();
   const [profiles, setProfiles] = useState<MachineProfile[]>(emptyProfiles);
   const [preheatEndsAtMs, setPreheatEndsAtMs] = useState<number | null>(null);
   const [preheatNowMs, setPreheatNowMs] = useState(() => Date.now());
@@ -114,6 +110,8 @@ export function App() {
   >();
   const [selectedShotId, setSelectedShotId] = useState<string | undefined>();
   const lastSyncedHistoryShotIdRef = useRef<string | undefined>();
+  const liveSessionIdRef = useRef<string | undefined>();
+  const liveShotRef = useRef<DashboardShot | undefined>();
   const machineRef = useRef<JsonObject>(emptyObject);
   const settingsRef = useRef<Settings>(emptySettings);
   const lastProfileRef = useRef<LastProfileResponse>(emptyLastProfile);
@@ -141,7 +139,9 @@ export function App() {
     setSettings(emptySettings);
     setHistory(emptyHistory);
     setLastProfile(emptyLastProfile);
+    setLiveShot(undefined);
     setProfiles(emptyProfiles);
+    liveShotRef.current = undefined;
     machineRef.current = emptyObject;
     settingsRef.current = emptySettings;
     lastProfileRef.current = emptyLastProfile;
@@ -152,6 +152,7 @@ export function App() {
     setSelectedProfileId(undefined);
     setSelectedShotId(undefined);
     lastSyncedHistoryShotIdRef.current = undefined;
+    liveSessionIdRef.current = undefined;
     setLoading(createLoadState(true));
 
     client
@@ -308,6 +309,7 @@ export function App() {
 
       if (hasPendingLiveStateRef.current) {
         hasPendingLiveStateRef.current = false;
+        setLiveShot(liveShotRef.current);
         setMachine(machineRef.current);
         setSettings(settingsRef.current);
         setLastProfile(lastProfileRef.current);
@@ -373,6 +375,7 @@ export function App() {
         const patchedState = applyLiveSocketEvent({
           event,
           lastProfile: lastProfileRef.current,
+          liveShot: liveShotRef.current,
           machine: machineRef.current,
           settings: settingsRef.current,
         });
@@ -390,6 +393,21 @@ export function App() {
         if (patchedState.lastProfile !== lastProfileRef.current) {
           lastProfileRef.current = patchedState.lastProfile;
           hasPendingLiveStateRef.current = true;
+        }
+
+        if (patchedState.liveShot !== liveShotRef.current) {
+          const nextLiveSessionId = patchedState.liveShot?.id;
+          const isNewLiveSession =
+            nextLiveSessionId !== undefined &&
+            nextLiveSessionId !== liveSessionIdRef.current;
+
+          liveShotRef.current = patchedState.liveShot;
+          liveSessionIdRef.current = nextLiveSessionId;
+          hasPendingLiveStateRef.current = true;
+
+          if (isNewLiveSession) {
+            setActiveChartSource('live');
+          }
         }
       },
       onStateChange: (state) => {
@@ -542,7 +560,7 @@ export function App() {
       ? undefined
       : snapshot.shots.find((shot) => shot.id === selectedShotId);
   const displayedShot =
-    activeChartSource === 'history' ? selectedShot : undefined;
+    activeChartSource === 'history' ? selectedShot : liveShot;
   const selectedShotIndex = selectedShot
     ? snapshot.shots.findIndex((shot) => shot.id === selectedShot.id)
     : -1;
@@ -715,11 +733,13 @@ export function App() {
                 onPrevious={() =>
                   setSelectedShotId(snapshot.shots[selectedShotIndex - 1].id)
                 }
-                selectedShot={
-                  activeChartSource === 'history' ? selectedShot : undefined
+                selectedShot={displayedShot}
+                selectedShotIndex={
+                  activeChartSource === 'history' ? selectedShotIndex : -1
                 }
-                selectedShotIndex={selectedShotIndex}
-                shotCount={snapshot.shots.length}
+                shotCount={
+                  activeChartSource === 'history' ? snapshot.shots.length : 0
+                }
               />
 
               <HistoryTableCard
@@ -740,198 +760,8 @@ export function App() {
   );
 }
 
-function applyLiveSocketEvent(input: {
-  event: MeticulousSocketEvent;
-  lastProfile: LastProfileResponse;
-  machine: JsonObject;
-  settings: Settings;
-}): LiveSocketState {
-  switch (input.event.event) {
-    case 'status':
-      return {
-        lastProfile: input.lastProfile,
-        machine: patchMachineFromStatusEvent(
-          input.machine,
-          input.event.payload,
-        ),
-        settings: input.settings,
-      };
-    case 'sensors':
-      return {
-        lastProfile: input.lastProfile,
-        machine: patchMachineFromSensorsEvent(
-          input.machine,
-          input.event.payload,
-        ),
-        settings: input.settings,
-      };
-    case 'settings':
-      return {
-        lastProfile: input.lastProfile,
-        machine: input.machine,
-        settings: patchSettingsFromSettingsEvent(
-          input.settings,
-          input.event.payload,
-        ),
-      };
-    case 'profile':
-      return {
-        lastProfile: patchLastProfileFromProfileEvent(
-          input.lastProfile,
-          input.event.payload,
-        ),
-        machine: input.machine,
-        settings: input.settings,
-      };
-    case 'heater_status':
-      return {
-        lastProfile: input.lastProfile,
-        machine: input.machine,
-        settings: input.settings,
-      };
-    default:
-      return {
-        lastProfile: input.lastProfile,
-        machine: input.machine,
-        settings: input.settings,
-      };
-  }
-}
-
-function patchMachineFromStatusEvent(
-  machine: JsonObject,
-  payload: unknown[],
-): JsonObject {
-  const status = readFirstObject(payload);
-  if (!status) {
-    return machine;
-  }
-
-  const nextStatus = readStringValue(status.status);
-  const nextName = readStringValue(status.name);
-  const nextState = readStringValue(status.state);
-  const nextLoadedProfile = readStringValue(status.loaded_profile);
-  const nextProfile = readStringValue(status.profile);
-  const sensors = readObjectValue(status.sensors);
-  const nextWeight = readNumberValue(sensors?.w);
-  const nextTemperature = readNumberValue(sensors?.t);
-
-  return mergeJsonObject(machine, {
-    ...(nextName ? { name: nextName } : {}),
-    ...(nextState ? { current_state: nextState, state: nextState } : {}),
-    ...(nextStatus || nextName || nextState
-      ? { status: nextStatus ?? nextName ?? nextState }
-      : {}),
-    ...(nextLoadedProfile ? { loaded_profile: nextLoadedProfile } : {}),
-    ...(nextProfile ? { profile: nextProfile } : {}),
-    ...(nextTemperature !== undefined
-      ? {
-          temp: nextTemperature,
-          temperature: nextTemperature,
-          water_temperature: nextTemperature,
-        }
-      : {}),
-    ...(nextWeight !== undefined
-      ? { current_weight: nextWeight, scale: nextWeight, weight: nextWeight }
-      : {}),
-  });
-}
-
-function patchMachineFromSensorsEvent(
-  machine: JsonObject,
-  payload: unknown[],
-): JsonObject {
-  const sensors = readFirstObject(payload);
-  if (!sensors) {
-    return machine;
-  }
-
-  const nextWeight = readNumberValue(sensors.weight_pred);
-  if (nextWeight === undefined) {
-    return machine;
-  }
-
-  if (readNumberValue(machine.weight) === nextWeight) {
-    return machine;
-  }
-
-  return mergeJsonObject(machine, {
-    current_weight: nextWeight,
-    scale: nextWeight,
-    weight: nextWeight,
-  });
-}
-
-function patchSettingsFromSettingsEvent(
-  settings: Settings,
-  payload: unknown[],
-): Settings {
-  const nextSettings = readFirstObject(payload);
-  if (!nextSettings) {
-    return settings;
-  }
-
-  return mergeJsonObject(settings, nextSettings) as Settings;
-}
-
-function patchLastProfileFromProfileEvent(
-  lastProfile: LastProfileResponse,
-  payload: unknown[],
-): LastProfileResponse {
-  const profile = readFirstObject(payload);
-  if (!profile || readStringValue(profile.change) !== 'load') {
-    return lastProfile;
-  }
-
-  const profileId = readStringValue(profile.profile_id);
-  if (!profileId) {
-    return lastProfile;
-  }
-
-  const nextProfile = mergeJsonObject(
-    readObjectValue(lastProfile.profile) ?? {},
-    { id: profileId },
-  );
-
-  return mergeJsonObject(lastProfile as JsonObject, {
-    profile: nextProfile,
-  }) as LastProfileResponse;
-}
-
-function mergeJsonObject(current: JsonObject, patch: JsonObject): JsonObject {
-  let nextObject = current;
-
-  for (const [key, value] of Object.entries(patch)) {
-    if (current[key] === value) {
-      continue;
-    }
-
-    if (nextObject === current) {
-      nextObject = { ...current };
-    }
-
-    nextObject[key] = value;
-  }
-
-  return nextObject;
-}
-
-function readFirstObject(payload: unknown[]): JsonObject | undefined {
-  return readObjectValue(payload[0]);
-}
-
 function readFirstNumber(payload: unknown[]): number | undefined {
   return readNumberValue(payload[0]);
-}
-
-function readObjectValue(value: unknown): JsonObject | undefined {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as JsonObject)
-    : undefined;
-}
-
-function readStringValue(value: unknown): string | undefined {
-  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
 }
 
 function readNumberValue(value: unknown): number | undefined {

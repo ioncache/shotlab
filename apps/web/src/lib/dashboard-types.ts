@@ -1,3 +1,5 @@
+export type DashboardShotSource = 'history' | 'live';
+
 export interface DashboardMetric {
   label: string;
   value: string;
@@ -14,6 +16,7 @@ export interface DashboardShotPoint {
 
 export interface DashboardShot {
   id: string;
+  source: DashboardShotSource;
   brewedAt: string;
   profile: string;
   profileId?: string;

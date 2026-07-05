@@ -109,6 +109,7 @@ function selectHistoryShot(
     profile: profileName ?? 'Unknown profile',
     profileId: readString(profileObject, 'id'),
     profileImage,
+    source: 'history',
     yieldGrams:
       readNullableNumber(row, 'weight', 'yield', 'yield_grams') ??
       (hasNestedHistoryData ? (points.at(-1)?.weight ?? null) : null),
