@@ -16,6 +16,8 @@ export interface DashboardShot {
   id: string;
   brewedAt: string;
   profile: string;
+  profileId?: string;
+  profileImage?: string;
   doseGrams: number | null;
   yieldGrams: number | null;
   durationSeconds: number | null;

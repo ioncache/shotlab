@@ -7,7 +7,9 @@
     "moduleResolution": "Bundler",
     "noEmit": true,
     "paths": {
-      "@shotlab/meticulous-client": ["../../packages/meticulous-client/src/index.ts"]
+      "@shotlab/meticulous-client": [
+        "../../packages/meticulous-client/src/index.ts"
+      ]
     },
     "types": ["vite/client"]
   },

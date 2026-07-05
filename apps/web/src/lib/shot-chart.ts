@@ -79,5 +79,7 @@ function formatSeconds(value: number | null): string {
 }
 
 function formatUnit(value: number | null, unit: string): string {
-  return value === null || value === undefined ? 'Unavailable' : `${value} ${unit}`;
+  return value === null || value === undefined
+    ? 'Unavailable'
+    : `${value} ${unit}`;
 }

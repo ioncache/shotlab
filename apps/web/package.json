@@ -22,7 +22,8 @@
     "@mui/x-charts": "^9.7.0",
     "@shotlab/meticulous-client": "workspace:*",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "swiper": "^14.0.1"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",
@@ -32,6 +33,9 @@
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.0.3",
     "jsdom": "^29.1.1",
-    "vite": "^8.1.0"
+    "oxfmt": "^0.53.0",
+    "oxlint": "^1.68.0",
+    "vite": "^8.1.0",
+    "vitest": "^4.1.8"
   }
 }

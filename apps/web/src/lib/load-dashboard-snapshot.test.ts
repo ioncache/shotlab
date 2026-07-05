@@ -7,7 +7,9 @@ describe('loadDashboardSnapshot', () => {
       getHistory: vi.fn().mockResolvedValue({
         history: [{ id: 'shot-1', profile: 'Bloom', weights: [0, 1, 3] }],
       }),
-      getLastProfile: vi.fn().mockResolvedValue({ profile: { title: 'Bloom' } }),
+      getLastProfile: vi
+        .fn()
+        .mockResolvedValue({ profile: { title: 'Bloom' } }),
       getMachine: vi.fn().mockResolvedValue({ state: 'Idle' }),
       getSettings: vi.fn().mockResolvedValue({ heating_timeout: 10 }),
     };
