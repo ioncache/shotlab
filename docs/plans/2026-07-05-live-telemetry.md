@@ -25,7 +25,6 @@ This branch covers:
 This branch does **not** cover:
 
 - new machine controls beyond the existing safe actions
-- replaying saved recordings into the app
 - historical storage or export
 - speculative telemetry fields that are not already present in the confirmed live event shapes
 - a new image download/cache pipeline beyond rendering URLs already present in the payloads
@@ -77,12 +76,12 @@ This branch does **not** cover:
 
 ## Task 1: Lock The Shared Chart Target
 
-- [ ] Re-read the current live socket path in `apps/web/src/app.tsx`, the confirmed event types in `packages/meticulous-client/src/socket-types.ts`, and the current chart helpers before editing.
-- [ ] Keep the branch outcome narrow:
+- [x] Re-read the current live socket path in `apps/web/src/app.tsx`, the confirmed event types in `packages/meticulous-client/src/socket-types.ts`, and the current chart helpers before editing.
+- [x] Keep the branch outcome narrow:
   - reuse the existing live cards
   - preserve the history table workflow
   - make the primary chart and selected-shot panel render either live or history data through one shared surface
-- [ ] Treat the chart/details surface state explicitly:
+- [x] Treat the chart/details surface state explicitly:
   - default source is `Live`
   - `Live` starts empty/standby until meaningful telemetry arrives
   - `History` keeps its own selected-shot state and can still default to the most recent saved shot
@@ -90,15 +89,15 @@ This branch does **not** cover:
   - live telemetry continues accumulating even while `History` is selected
   - a newly detected live session can auto-switch the source back to `Live`
   - packets from an already-running live session must not keep forcing the source back to `Live` after the user has switched to `History`
-- [ ] Treat these fields as the first-class live input surface unless implementation proves otherwise:
+- [x] Treat these fields as the first-class live input surface unless implementation proves otherwise:
   - `status.payload[0].profile_time`
   - `status.payload[0].profile`
   - `status.payload[0].loaded_profile`
   - `status.payload[0].state` / `status.payload[0].status` / `status.payload[0].name`
   - `status.payload[0].sensors.{f,g,p,t,w}`
   - `sensors.payload[0].weight_pred`
-- [ ] Avoid creating a "perfect telemetry domain model." One synthetic `DashboardShot`-shaped live view is enough for this branch.
-- [ ] Treat profile images as opportunistic UI enrichment only:
+- [x] Avoid creating a "perfect telemetry domain model." One synthetic `DashboardShot`-shaped live view is enough for this branch.
+- [x] Treat profile images as opportunistic UI enrichment only:
   - use `profile.display?.image` or equivalent already-present mapped data
   - do not create a second fetch path just to resolve missing images
 
@@ -258,6 +257,33 @@ export function applyLiveSocketEvent(
 - [x] Keep the first pass read-only:
   - no live load action yet
   - no optimistic state
+
+## Task 13: Add History Shot Replay Controls To The Shared Chart
+
+- [x] Keep replay on the existing shared chart surface instead of building a second chart mode.
+- [x] Add minimal replay controls for history shots:
+  - `Start`
+  - `Play/Pause`
+  - `End`
+  - slider scrubber under the chart
+- [x] Make replay drive the same active point used by the chart details so the top metrics move as if the shot were live.
+- [x] Reset replay when the selected history shot changes:
+  - stop playback
+  - load the final point as the default displayed state
+- [x] Keep live brews non-replayable while the brew is still active.
+- [x] Keep replay timing tied to real wall-clock elapsed time instead of chained point-by-point timers so browser render delay does not stretch the total shot duration.
+- [x] Keep the full chart domain stable during replay and mask future data points instead of shrinking the axis down to the visible slice.
+- [x] Keep hover preview separate from replay state:
+  - hovering a visible point previews that point without moving replay
+  - empty future replay space shows no tooltip, no hover line, and no future point details
+- [x] Defer the finished-live handoff decision:
+  - do not invent a live-to-history auto-switch in this branch
+  - revisit replay controls for a finished live shot once that handoff behavior is decided
+
+**Exit criteria**
+
+- history shots can be replayed through the shared chart surface without a new data model
+- switching shots returns the UI to the final-shot state and stops replay
   - no new dependency unless the existing stack clearly cannot cover the interaction
 - [x] Prefer the approved installed carousel library over hand-rolled rotation math.
 
@@ -336,6 +362,25 @@ export function applyLiveSocketEvent(
 - [ ] Keep the first pass mechanical:
   - preserve current wording unless the branch already changed it intentionally
   - replace string literals with translation lookups
+
+---
+
+## Task 14: Add Temporary Brand Assets For Header And Favicon
+
+- [x] Replace the placeholder app icon with a simple warm SVG favicon/app icon for ShotLab.
+- [x] Add a matching horizontal SVG logo for the dashboard header.
+- [x] Keep the first branding pass intentionally simple:
+  - flat vector art
+  - espresso glass with crema
+  - warm palette
+  - easy to replace later
+- [x] Wire the header to use the shared logo asset instead of plain text-only branding.
+- [x] Remove developer-facing descriptive copy from the header so the branding stays UI-facing only.
+
+**Exit criteria**
+
+- the favicon request resolves to a real ShotLab SVG asset
+- the dashboard header uses the temporary shared ShotLab logo system
   - avoid mixing localization work with broader UI redesign
 - [ ] Leave room for later language expansion without requiring another sweep through component files.
 

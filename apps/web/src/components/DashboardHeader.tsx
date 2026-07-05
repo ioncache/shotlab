@@ -1,4 +1,4 @@
-import { Stack, Typography } from '@mui/material';
+import { Box, Stack } from '@mui/material';
 import type { ReactNode } from 'react';
 
 interface DashboardHeaderProps {
@@ -12,11 +12,18 @@ export function DashboardHeader(props: DashboardHeaderProps) {
       spacing={2}
       sx={{ alignItems: { md: 'flex-start' }, justifyContent: 'space-between' }}
     >
-      <Stack spacing={1}>
-        <Typography variant="h3">ShotLab</Typography>
-        <Typography color="text.secondary" sx={{ maxWidth: 760 }}>
-          Current machine state, safe actions, and brew data.
-        </Typography>
+      <Stack>
+        <Box
+          alt="ShotLab logo"
+          component="img"
+          src="/logo.svg"
+          sx={{
+            display: 'block',
+            height: { md: 72, xs: 56 },
+            maxWidth: '100%',
+            width: 'auto',
+          }}
+        />
       </Stack>
       {props.debugControl}
     </Stack>

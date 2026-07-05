@@ -3,7 +3,12 @@ import {
   buildShotChartSummary,
   getShotChartSeries,
   getShotPointDetails,
+  isShotReplayAvailable,
+  readShotReplayDurationMs,
+  readShotReplayElapsedMs,
   selectShotPointIndex,
+  selectShotReplayPointIndex,
+  stepShotPointIndex,
 } from './shot-chart';
 import type { DashboardShot } from './dashboard-types';
 
@@ -39,6 +44,7 @@ const shot: DashboardShot = {
     },
   ],
   profile: 'Low Contact',
+  source: 'history',
   yieldGrams: 51.37,
 };
 
@@ -71,6 +77,60 @@ describe('selectShotPointIndex', () => {
   it('clamps out-of-range selected indexes back into the shot', () => {
     expect(selectShotPointIndex(shot, -10)).toBe(0);
     expect(selectShotPointIndex(shot, 999)).toBe(2);
+  });
+});
+
+describe('isShotReplayAvailable', () => {
+  it('only enables replay for multi-point history shots', () => {
+    expect(isShotReplayAvailable(shot)).toBe(true);
+    expect(
+      isShotReplayAvailable({
+        ...shot,
+        points: [shot.points[0]],
+      }),
+    ).toBe(false);
+    expect(
+      isShotReplayAvailable({
+        ...shot,
+        source: 'live',
+      }),
+    ).toBe(false);
+  });
+});
+
+describe('stepShotPointIndex', () => {
+  it('moves one step and stays within the available point range', () => {
+    expect(stepShotPointIndex(shot, 1, -1)).toBe(0);
+    expect(stepShotPointIndex(shot, 1, 1)).toBe(2);
+    expect(stepShotPointIndex(shot, 2, 1)).toBe(2);
+  });
+});
+
+describe('replay timing helpers', () => {
+  it('reads the total replay duration from the declared shot duration', () => {
+    expect(readShotReplayDurationMs(shot)).toBe(21684);
+  });
+
+  it('scales replay timing to match the declared shot duration', () => {
+    const sparseShot: DashboardShot = {
+      ...shot,
+      durationSeconds: 18,
+      points: [
+        { ...shot.points[0], second: 0 },
+        { ...shot.points[1], second: 1 },
+        { ...shot.points[2], second: 3 },
+      ],
+    };
+
+    expect(readShotReplayDurationMs(sparseShot)).toBe(18000);
+    expect(readShotReplayElapsedMs(sparseShot, 0)).toBe(0);
+    expect(readShotReplayElapsedMs(sparseShot, 1)).toBe(6000);
+    expect(readShotReplayElapsedMs(sparseShot, 2)).toBe(18000);
+    expect(selectShotReplayPointIndex(sparseShot, 0)).toBe(0);
+    expect(selectShotReplayPointIndex(sparseShot, 5999)).toBe(0);
+    expect(selectShotReplayPointIndex(sparseShot, 6000)).toBe(1);
+    expect(selectShotReplayPointIndex(sparseShot, 17999)).toBe(1);
+    expect(selectShotReplayPointIndex(sparseShot, 18000)).toBe(2);
   });
 });
 

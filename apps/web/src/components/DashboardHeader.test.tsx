@@ -14,7 +14,7 @@ describe('DashboardHeader', () => {
       <DashboardHeader debugControl={<button type="button">Debug</button>} />,
     );
 
-    expect(screen.getByText('ShotLab')).toBeDefined();
+    expect(screen.getByRole('img', { name: 'ShotLab logo' })).toBeDefined();
     expect(screen.getByRole('button', { name: 'Debug' })).toBeDefined();
   });
 });

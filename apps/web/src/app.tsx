@@ -764,6 +764,10 @@ function readFirstNumber(payload: unknown[]): number | undefined {
   return readNumberValue(payload[0]);
 }
 
+function readStringValue(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+}
+
 function readNumberValue(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value)
     ? value

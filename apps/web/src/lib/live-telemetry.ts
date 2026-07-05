@@ -155,7 +155,10 @@ export function patchLastProfileFromProfileEvent(
 function applyStatusEvent(
   input: ApplyLiveSocketEventInput,
 ): LiveTelemetryState {
-  const machine = patchMachineFromStatusEvent(input.machine, input.event.payload);
+  const machine = patchMachineFromStatusEvent(
+    input.machine,
+    input.event.payload,
+  );
 
   return {
     lastProfile: input.lastProfile,
@@ -176,6 +179,7 @@ function applySensorsEvent(
     lastProfile: input.lastProfile,
     liveShot: patchLiveShotFromSensorsEvent(
       input.liveShot,
+      input.machine,
       input.event.payload,
     ),
     machine: patchMachineFromSensorsEvent(input.machine, input.event.payload),
@@ -210,7 +214,7 @@ function patchLiveShotFromStatusEvent(
   }
 
   if (!readIsBrewingStatus(status)) {
-    return undefined;
+    return liveShot;
   }
 
   const nextPoint = createLiveShotPoint(status);
@@ -243,9 +247,14 @@ function patchLiveShotFromStatusEvent(
 
 function patchLiveShotFromSensorsEvent(
   liveShot: DashboardShot | undefined,
+  machine: JsonObject,
   payload: unknown[],
 ): DashboardShot | undefined {
   if (!liveShot || liveShot.points.length === 0) {
+    return liveShot;
+  }
+
+  if (!readIsBrewingMachine(machine)) {
     return liveShot;
   }
 
@@ -299,7 +308,9 @@ function patchLiveShotProfile(
   };
 }
 
-function createLiveShotPoint(status: JsonObject): DashboardShotPoint | undefined {
+function createLiveShotPoint(
+  status: JsonObject,
+): DashboardShotPoint | undefined {
   const profileTime = readNumberValue(status.profile_time);
   if (profileTime === undefined) {
     return undefined;
@@ -362,7 +373,9 @@ function resolveLiveProfile(
   const profileId = readStringValue(profile?.id);
   const profileName =
     readStringValue(profile?.name) ?? readStringValue(profile?.title);
-  const profileImage = readStringValue(readObjectValue(profile?.display)?.image);
+  const profileImage = readStringValue(
+    readObjectValue(profile?.display)?.image,
+  );
   const matchesLastProfile =
     statusReference !== undefined &&
     (normalize(statusReference) === normalize(profileId) ||
@@ -374,19 +387,24 @@ function resolveLiveProfile(
       (matchesLastProfile || statusReference === undefined
         ? profileImage
         : undefined) ?? liveShot?.profileImage,
-    name:
-      statusReference ??
-      profileName ??
-      liveShot?.profile ??
-      'Live brew',
+    name: statusReference ?? profileName ?? liveShot?.profile ?? 'Live brew',
   };
 }
 
 function readIsBrewingStatus(status: JsonObject): boolean {
+  const extracting = status.extracting;
+  if (extracting === true) {
+    return true;
+  }
+
+  return readIsBrewingMachine(status);
+}
+
+function readIsBrewingMachine(machine: JsonObject): boolean {
   const state = (
-    readStringValue(status.state) ??
-    readStringValue(status.status) ??
-    readStringValue(status.name)
+    readStringValue(machine.state) ??
+    readStringValue(machine.status) ??
+    readStringValue(machine.name)
   )?.toLowerCase();
 
   if (!state) {
@@ -399,7 +417,7 @@ function readIsBrewingStatus(status: JsonObject): boolean {
 }
 
 function formatLiveTimestamp(value: number | undefined): string {
-  if (value === undefined) {
+  if (value === undefined || value <= 0) {
     return 'Live brew';
   }
 
