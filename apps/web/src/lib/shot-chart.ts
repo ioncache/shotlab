@@ -18,6 +18,15 @@ export interface ShotChartSummary {
   title: string;
 }
 
+export interface ShotChartExtents {
+  brewMax: number;
+  weightMax: number;
+}
+
+export function isShotReplayAvailable(shot: DashboardShot): boolean {
+  return shot.source === 'history' && shot.points.length > 1;
+}
+
 export function buildShotChartSummary(shot: DashboardShot): ShotChartSummary {
   return {
     subtitle: [
@@ -38,6 +47,26 @@ export function getShotChartSeries(shot: DashboardShot): ShotChartSeries {
   };
 }
 
+export function getShotChartExtents(shot: DashboardShot): ShotChartExtents {
+  let brewMax = 0;
+  let weightMax = 0;
+
+  for (const point of shot.points) {
+    brewMax = Math.max(
+      brewMax,
+      point.flow ?? 0,
+      point.gravimetricFlow ?? 0,
+      point.pressure ?? 0,
+    );
+    weightMax = Math.max(weightMax, point.weight ?? 0);
+  }
+
+  return {
+    brewMax: brewMax > 0 ? brewMax : 1,
+    weightMax: weightMax > 0 ? weightMax : 1,
+  };
+}
+
 export function selectShotPointIndex(
   shot: DashboardShot,
   selectedPointIndex?: number,
@@ -51,6 +80,84 @@ export function selectShotPointIndex(
   }
 
   return Math.max(0, Math.min(selectedPointIndex, shot.points.length - 1));
+}
+
+export function stepShotPointIndex(
+  shot: DashboardShot,
+  selectedPointIndex: number | undefined,
+  step: number,
+): number {
+  return selectShotPointIndex(
+    shot,
+    selectShotPointIndex(shot, selectedPointIndex) + step,
+  );
+}
+
+export function readShotReplayDurationMs(shot: DashboardShot): number {
+  const firstSecond = shot.points[0]?.second;
+  const lastSecond = shot.points.at(-1)?.second;
+
+  if (
+    shot.durationSeconds !== null &&
+    shot.durationSeconds !== undefined &&
+    shot.durationSeconds > 0
+  ) {
+    return Math.round(shot.durationSeconds * 1000);
+  }
+
+  if (
+    firstSecond === undefined ||
+    lastSecond === undefined ||
+    lastSecond <= firstSecond
+  ) {
+    return 0;
+  }
+
+  return Math.round((lastSecond - firstSecond) * 1000);
+}
+
+export function readShotReplayElapsedMs(
+  shot: DashboardShot,
+  selectedPointIndex: number | undefined,
+): number {
+  const currentIndex = selectShotPointIndex(shot, selectedPointIndex);
+  const currentPoint = shot.points[currentIndex];
+  const firstSecond = shot.points[0]?.second;
+
+  if (!currentPoint || firstSecond === undefined) {
+    return 0;
+  }
+
+  const replayScale = readShotReplayScale(shot);
+
+  return Math.max(
+    0,
+    Math.round((currentPoint.second - firstSecond) * 1000 * replayScale),
+  );
+}
+
+export function selectShotReplayPointIndex(
+  shot: DashboardShot,
+  elapsedMs: number,
+): number {
+  const replayDurationMs = readShotReplayDurationMs(shot);
+  if (replayDurationMs <= 0) {
+    return selectShotPointIndex(shot);
+  }
+
+  const clampedElapsedMs = Math.max(0, Math.min(elapsedMs, replayDurationMs));
+  let nextIndex = 0;
+
+  for (let index = 0; index < shot.points.length; index += 1) {
+    if (readShotReplayElapsedMs(shot, index) <= clampedElapsedMs) {
+      nextIndex = index;
+      continue;
+    }
+
+    break;
+  }
+
+  return nextIndex;
 }
 
 export function getShotPointDetails(
@@ -79,5 +186,29 @@ function formatSeconds(value: number | null): string {
 }
 
 function formatUnit(value: number | null, unit: string): string {
-  return value === null || value === undefined ? 'Unavailable' : `${value} ${unit}`;
+  return value === null || value === undefined
+    ? 'Unavailable'
+    : `${value.toFixed(2)} ${unit}`;
+}
+
+function readShotReplayScale(shot: DashboardShot): number {
+  const firstSecond = shot.points[0]?.second;
+  const lastSecond = shot.points.at(-1)?.second;
+
+  if (
+    shot.durationSeconds === null ||
+    shot.durationSeconds === undefined ||
+    shot.durationSeconds <= 0 ||
+    firstSecond === undefined ||
+    lastSecond === undefined
+  ) {
+    return 1;
+  }
+
+  const recordedSpanSeconds = lastSecond - firstSecond;
+  if (recordedSpanSeconds <= 0) {
+    return 1;
+  }
+
+  return shot.durationSeconds / recordedSpanSeconds;
 }

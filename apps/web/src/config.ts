@@ -17,8 +17,7 @@ export function readAppConfig(env: ImportMetaEnv = import.meta.env): AppConfig {
     const url = new URL(rawBaseUrl);
     if (url.protocol !== 'http:' && url.protocol !== 'https:') {
       return {
-        meticulousBaseUrlError:
-          'METICULOUS_BASE_URL must be an http(s) URL.',
+        meticulousBaseUrlError: 'METICULOUS_BASE_URL must be an http(s) URL.',
       };
     }
 
@@ -27,8 +26,7 @@ export function readAppConfig(env: ImportMetaEnv = import.meta.env): AppConfig {
     };
   } catch {
     return {
-      meticulousBaseUrlError:
-        'METICULOUS_BASE_URL must be a valid URL.',
+      meticulousBaseUrlError: 'METICULOUS_BASE_URL must be a valid URL.',
     };
   }
 }

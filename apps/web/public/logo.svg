@@ -1,0 +1,56 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 360 96"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">ShotLab logo</title>
+  <desc id="desc">Espresso glass with crema next to the ShotLab wordmark</desc>
+  <rect
+    x="8"
+    y="8"
+    width="80"
+    height="80"
+    rx="20"
+    fill="#f6efe5"
+  />
+  <path
+    d="M24 32c0-7 5-12 12-12h24c7 0 12 5 12 12v8H24z"
+    fill="#f1c27d"
+  />
+  <path
+    d="M28 40h40v18c0 11-9 20-20 20S28 69 28 58z"
+    fill="#5a3422"
+  />
+  <path
+    d="M34 46h28v5H34z"
+    fill="#efd7b0"
+    opacity="0.85"
+  />
+  <path
+    d="M34 51h28v10c0 8-6 14-14 14s-14-6-14-14z"
+    fill="#6e4028"
+  />
+  <text
+    x="112"
+    y="50"
+    font-family="'Trebuchet MS', 'Segoe UI', sans-serif"
+    font-size="34"
+    font-weight="700"
+    fill="#5a3422"
+    letter-spacing="0.5"
+  >
+    ShotLab
+  </text>
+  <text
+    x="114"
+    y="73"
+    font-family="'Trebuchet MS', 'Segoe UI', sans-serif"
+    font-size="13"
+    font-weight="600"
+    fill="#9f6847"
+    letter-spacing="2"
+  >
+    ESPRESSO TELEMETRY
+  </text>
+</svg>

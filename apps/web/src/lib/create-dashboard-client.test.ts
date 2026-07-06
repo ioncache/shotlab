@@ -10,7 +10,10 @@ describe('createDashboardClient', () => {
       }),
     );
 
-    const client = createDashboardClient('http://machine.local:8080', fetchImpl);
+    const client = createDashboardClient(
+      'http://machine.local:8080',
+      fetchImpl,
+    );
 
     await client.getMachine();
 

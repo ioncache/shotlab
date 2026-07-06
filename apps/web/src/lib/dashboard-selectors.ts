@@ -11,6 +11,7 @@ import type {
   DashboardShotPoint,
   DashboardSnapshot,
 } from './dashboard-types';
+import { formatCelsius, formatGrams } from './dashboard-display';
 
 export function selectLiveCards(
   machine: JsonObject,
@@ -34,7 +35,10 @@ export function selectLiveCards(
   return [
     {
       label: 'Temperature',
-      value: temperature === undefined ? 'Unavailable' : `${temperature} C`,
+      value:
+        temperature === undefined
+          ? 'Unavailable'
+          : formatCelsius(temperature),
     },
     {
       label: 'Machine status',
@@ -42,7 +46,7 @@ export function selectLiveCards(
     },
     {
       label: 'Weight',
-      value: weight === undefined ? 'Unavailable' : `${weight} g`,
+      value: weight === undefined ? 'Unavailable' : formatGrams(weight),
     },
     {
       label: 'Last loaded profile',
@@ -80,7 +84,10 @@ function readMachineStatus(machine: JsonObject): string | undefined {
   return readString(machine, 'status', 'name', 'state', 'current_state');
 }
 
-function selectHistoryShot(row: HistoryEntry, index: number): DashboardShot | undefined {
+function selectHistoryShot(
+  row: HistoryEntry,
+  index: number,
+): DashboardShot | undefined {
   const points = selectShotPoints(row);
   const hasNestedHistoryData = Array.isArray(row.data) && row.data.length > 0;
   if (points.length === 0) {
@@ -88,6 +95,11 @@ function selectHistoryShot(row: HistoryEntry, index: number): DashboardShot | un
   }
 
   const timestamp = readString(row, 'timestamp', 'created_at', 'brewed_at');
+  const profileObject = asObject(row.profile);
+  const profileImage = readProfileImage(profileObject);
+  const profileName =
+    readString(profileObject, 'name', 'title', 'profile_title', 'id') ??
+    readString(row, 'name', 'profile_title', 'profile', 'profile_name');
 
   return {
     brewedAt: formatTimestamp(timestamp ?? readEpochSeconds(row, 'time')),
@@ -95,15 +107,16 @@ function selectHistoryShot(row: HistoryEntry, index: number): DashboardShot | un
     durationSeconds:
       readNullableNumber(row, 'duration', 'duration_seconds') ??
       (timestamp ? readNullableNumber(row, 'time') : null) ??
-      (hasNestedHistoryData ? points.at(-1)?.second ?? null : null),
+      (hasNestedHistoryData ? (points.at(-1)?.second ?? null) : null),
     id: readString(row, 'id', 'uuid') ?? `shot-${index + 1}`,
     points,
-    profile:
-      readString(row, 'name', 'profile_title', 'profile', 'profile_name') ??
-      'Unknown profile',
+    profile: profileName ?? 'Unknown profile',
+    profileId: readString(profileObject, 'id'),
+    profileImage,
+    source: 'history',
     yieldGrams:
       readNullableNumber(row, 'weight', 'yield', 'yield_grams') ??
-      (hasNestedHistoryData ? points.at(-1)?.weight ?? null : null),
+      (hasNestedHistoryData ? (points.at(-1)?.weight ?? null) : null),
   };
 }
 
@@ -153,11 +166,13 @@ function selectShotPoints(row: JsonObject): DashboardShotPoint[] {
   return points
     .map((point, index) => {
       const nextPoint = asObject(point);
-      const second =
-        readNumber(nextPoint, 'second', 'time', 't') ?? index;
+      const second = readNumber(nextPoint, 'second', 'time', 't') ?? index;
       const weight = readNullableNumber(nextPoint, 'weight', 'y', 'value');
 
-      if (weight === null && readNumber(nextPoint, 'second', 'time', 't') === undefined) {
+      if (
+        weight === null &&
+        readNumber(nextPoint, 'second', 'time', 't') === undefined
+      ) {
         return undefined;
       }
 
@@ -177,10 +192,7 @@ function selectShotPoints(row: JsonObject): DashboardShotPoint[] {
     .filter((point): point is DashboardShotPoint => point !== undefined);
 }
 
-function readString(
-  value: JsonObject,
-  ...keys: string[]
-): string | undefined {
+function readString(value: JsonObject, ...keys: string[]): string | undefined {
   for (const key of keys) {
     const candidate = value[key];
     if (typeof candidate === 'string' && candidate.trim()) {
@@ -191,10 +203,7 @@ function readString(
   return undefined;
 }
 
-function readNumber(
-  value: JsonObject,
-  ...keys: string[]
-): number | undefined {
+function readNumber(value: JsonObject, ...keys: string[]): number | undefined {
   for (const key of keys) {
     const candidate = value[key];
     if (typeof candidate === 'number' && Number.isFinite(candidate)) {
@@ -237,8 +246,15 @@ function readNumberArray(value: JsonObject, ...keys: string[]): number[] {
   return [];
 }
 
-function readNullableNumber(value: JsonObject, ...keys: string[]): number | null {
+function readNullableNumber(
+  value: JsonObject,
+  ...keys: string[]
+): number | null {
   return readNumber(value, ...keys) ?? null;
+}
+
+function readProfileImage(profile: JsonObject): string | undefined {
+  return readString(asObject(profile.display), 'image');
 }
 
 function formatTimestamp(value?: string): string {
@@ -257,7 +273,10 @@ function formatTimestamp(value?: string): string {
   }).format(date);
 }
 
-function readEpochSeconds(value: JsonObject, ...keys: string[]): string | undefined {
+function readEpochSeconds(
+  value: JsonObject,
+  ...keys: string[]
+): string | undefined {
   const epochSeconds = readNumber(value, ...keys);
   if (epochSeconds === undefined) {
     return undefined;

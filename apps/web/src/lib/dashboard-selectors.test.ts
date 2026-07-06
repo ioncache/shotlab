@@ -33,9 +33,9 @@ describe('selectLiveCards', () => {
         {},
       ),
     ).toEqual([
-      { label: 'Temperature', value: '93.4 C' },
+      { label: 'Temperature', value: '93.40 C' },
       { label: 'Machine status', value: 'Idle' },
-      { label: 'Weight', value: '0.2 g' },
+      { label: 'Weight', value: '0.20 g' },
       { label: 'Last loaded profile', value: 'Filter Bright 1' },
     ]);
   });
@@ -59,7 +59,9 @@ describe('selectHistoryShots', () => {
       }),
     ).toEqual([
       {
-        brewedAt: timestampFormatter.format(new Date('2026-06-28T11:12:13.000Z')),
+        brewedAt: timestampFormatter.format(
+          new Date('2026-06-28T11:12:13.000Z'),
+        ),
         doseGrams: 18,
         durationSeconds: 31,
         id: 'shot-1',
@@ -98,6 +100,9 @@ describe('selectHistoryShots', () => {
           },
         ],
         profile: 'Filter Bright 1',
+        profileId: undefined,
+        profileImage: undefined,
+        source: 'history',
         yieldGrams: 40.2,
       },
     ]);
@@ -179,6 +184,9 @@ describe('selectHistoryShots', () => {
           },
         ],
         profile: 'Low Contact',
+        profileId: undefined,
+        profileImage: undefined,
+        source: 'history',
         yieldGrams: 5.87,
       },
     ]);
@@ -212,7 +220,12 @@ describe('selectHistoryShots', () => {
           {
             data: [
               {
-                shot: { flow: 2.1, gravimetric_flow: 0.4, pressure: 1.2, weight: 3.2 },
+                shot: {
+                  flow: 2.1,
+                  gravimetric_flow: 0.4,
+                  pressure: 1.2,
+                  weight: 3.2,
+                },
                 time: 1000,
               },
               {
@@ -250,6 +263,66 @@ describe('selectHistoryShots', () => {
           },
         ],
         profile: 'Gap Test',
+        profileId: undefined,
+        profileImage: undefined,
+        source: 'history',
+        yieldGrams: null,
+      },
+    ]);
+  });
+
+  it('carries profile image urls through nested profile objects', () => {
+    expect(
+      selectHistoryShots({
+        history: [
+          {
+            id: 'shot-with-image',
+            profile: {
+              display: {
+                image: 'https://example.com/profiles/bright.png',
+              },
+              name: 'Bright Filter',
+            },
+            weights: [0, 5, 10],
+          },
+        ],
+      }),
+    ).toEqual([
+      {
+        brewedAt: 'Unknown time',
+        doseGrams: null,
+        durationSeconds: null,
+        id: 'shot-with-image',
+        points: [
+          {
+            flow: null,
+            gravimetricFlow: null,
+            pressure: null,
+            second: 0,
+            temperatureCelsius: null,
+            weight: 0,
+          },
+          {
+            flow: null,
+            gravimetricFlow: null,
+            pressure: null,
+            second: 1,
+            temperatureCelsius: null,
+            weight: 5,
+          },
+          {
+            flow: null,
+            gravimetricFlow: null,
+            pressure: null,
+            second: 2,
+            temperatureCelsius: null,
+            weight: 10,
+          },
+        ],
+        profile: 'Bright Filter',
+        profileId: undefined,
+        profileImage: 'https://example.com/profiles/bright.png',
+        source: 'history',
         yieldGrams: null,
       },
     ]);
@@ -299,6 +372,9 @@ describe('selectDashboardSnapshot', () => {
             },
           ],
           profile: 'Unknown profile',
+          profileId: undefined,
+          profileImage: undefined,
+          source: 'history',
           yieldGrams: null,
         },
       ],

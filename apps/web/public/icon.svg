@@ -1,24 +1,44 @@
 <svg
   xmlns="http://www.w3.org/2000/svg"
   viewBox="0 0 128 128"
+  role="img"
+  aria-labelledby="title desc"
 >
+  <title id="title">ShotLab icon</title>
+  <desc id="desc">SL monogram with a small espresso glass</desc>
   <rect
     width="128"
     height="128"
-    rx="24"
-    fill="#edf1f4"
+    rx="28"
+    fill="#f6efe5"
   />
   <path
-    d="M28 74c0-18 14-32 32-32s32 14 32 32"
-    fill="none"
-    stroke="#4f7a90"
-    stroke-linecap="round"
-    stroke-width="10"
+    d="M32 38c0-8 6-14 14-14h36c8 0 14 6 14 14v8H32z"
+    fill="#f1c27d"
   />
-  <circle
-    cx="64"
-    cy="74"
-    r="10"
-    fill="#4f7a90"
+  <path
+    d="M36 46h56v30c0 16-13 28-28 28S36 92 36 76z"
+    fill="#5a3422"
   />
+  <path
+    d="M44 54h40v6H44z"
+    fill="#efd7b0"
+    opacity="0.8"
+  />
+  <path
+    d="M44 58h40v18c0 11-9 20-20 20s-20-9-20-20z"
+    fill="#6e4028"
+  />
+  <text
+    x="64"
+    y="115"
+    text-anchor="middle"
+    font-family="'Trebuchet MS', 'Segoe UI', sans-serif"
+    font-size="28"
+    font-weight="700"
+    fill="#5a3422"
+    letter-spacing="2"
+  >
+    SL
+  </text>
 </svg>

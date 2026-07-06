@@ -6,9 +6,7 @@ type ReadDashboardClient = Pick<
   'getHistory' | 'getLastProfile' | 'getMachine' | 'getSettings'
 >;
 
-export async function loadDashboardSnapshot(
-  client: ReadDashboardClient,
-) {
+export async function loadDashboardSnapshot(client: ReadDashboardClient) {
   const [machine, settings, history, lastProfile] = await Promise.all([
     client.getMachine(),
     client.getSettings(),

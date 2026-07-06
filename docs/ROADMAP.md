@@ -152,6 +152,19 @@ Each step should be roughly one PR or one branch/worktree of work.
 
 ---
 
+## UI Foundation Follow-Ups
+
+- [ ] Localization foundation
+  - Move user-facing web copy behind translation keys instead of inline strings.
+  - Start with an English translation file only.
+  - Choose the i18n approach intentionally and research any new package before adding it.
+- [ ] Theming foundation
+  - Centralize dashboard colors and presentation tokens through the app theme.
+  - Remove hardcoded UI colors and other styling that bypasses the theme.
+  - Tighten components that currently key behavior off display copy so theme and copy changes do not break logic.
+
+---
+
 ## Technical Debt
 
 Track architectural improvements separately from new features.
