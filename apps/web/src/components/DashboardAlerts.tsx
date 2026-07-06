@@ -14,8 +14,8 @@ export function DashboardAlerts(props: DashboardAlertsProps) {
           in the shell environment.
         </Alert>
       ) : null}
-      {props.loadErrors.map((error) => (
-        <Alert key={error} severity="warning">
+      {props.loadErrors.map((error, index) => (
+        <Alert key={`${index}-${error}`} severity="warning">
           {error}
         </Alert>
       ))}

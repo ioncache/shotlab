@@ -345,23 +345,9 @@ export function applyLiveSocketEvent(
 
 ---
 
-## Task 9: Extract UI Copy Into A Localization Layer
+## Deferred Follow-Up
 
-- [ ] Stop adding new raw user-facing strings directly in React components once the current telemetry behavior is stable.
-- [ ] Pick the localization approach intentionally before implementation:
-  - review existing repo/frontend patterns first
-  - if a new package is needed, research options and get approval before adding it
-  - `i18next`/`react-i18next` is a likely candidate, but do not assume it by default
-- [ ] Create the first English translation file and move current UI copy into translation keys instead of inline strings.
-- [ ] Start with the surfaces already touched in this branch:
-  - chart header/title/subtitle text
-  - empty-state messages
-  - selected-shot/live-details labels
-  - history table labels
-  - action labels and common status copy
-- [ ] Keep the first pass mechanical:
-  - preserve current wording unless the branch already changed it intentionally
-  - replace string literals with translation lookups
+- [ ] Localization and theming follow-up work has been moved out of this branch plan and into `docs/ROADMAP.md`.
 
 ---
 
@@ -381,14 +367,6 @@ export function applyLiveSocketEvent(
 
 - the favicon request resolves to a real ShotLab SVG asset
 - the dashboard header uses the temporary shared ShotLab logo system
-  - avoid mixing localization work with broader UI redesign
-- [ ] Leave room for later language expansion without requiring another sweep through component files.
-
-**Exit criteria**
-
-- user-facing UI copy is keyed instead of hard-coded in the main component tree
-- the first English translation file exists and is wired into the web app
-- any new dependency for localization was researched and explicitly approved before installation
 
 ---
 

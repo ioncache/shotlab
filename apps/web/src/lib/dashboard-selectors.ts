@@ -11,6 +11,7 @@ import type {
   DashboardShotPoint,
   DashboardSnapshot,
 } from './dashboard-types';
+import { formatCelsius, formatGrams } from './dashboard-display';
 
 export function selectLiveCards(
   machine: JsonObject,
@@ -34,7 +35,10 @@ export function selectLiveCards(
   return [
     {
       label: 'Temperature',
-      value: temperature === undefined ? 'Unavailable' : `${temperature} C`,
+      value:
+        temperature === undefined
+          ? 'Unavailable'
+          : formatCelsius(temperature),
     },
     {
       label: 'Machine status',
@@ -42,7 +46,7 @@ export function selectLiveCards(
     },
     {
       label: 'Weight',
-      value: weight === undefined ? 'Unavailable' : `${weight} g`,
+      value: weight === undefined ? 'Unavailable' : formatGrams(weight),
     },
     {
       label: 'Last loaded profile',

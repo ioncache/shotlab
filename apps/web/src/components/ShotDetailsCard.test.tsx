@@ -12,6 +12,7 @@ const shot = {
   points: [],
   profile: 'Bright Filter',
   profileImage: '/profiles/bright.png',
+  source: 'history' as const,
   yieldGrams: 36,
 };
 
@@ -94,5 +95,27 @@ describe('ShotDetailsCard', () => {
     fireEvent.click(screen.getByRole('button', { name: /Bright Filter/i }));
 
     expect(onProfileSelect).toHaveBeenCalledOnce();
+  });
+
+  it('shows an empty-state shot id instead of a fake numeric id', () => {
+    render(
+      <ShotDetailsCard
+        activeSource="history"
+        historyLoading={false}
+        isProfileSelectionDisabled={false}
+        onNext={() => undefined}
+        onProfileSelect={() => undefined}
+        onPrevious={() => undefined}
+        selectedShotIndex={-1}
+        shotCount={0}
+      />,
+    );
+
+    expect(screen.getByText('—')).toBeDefined();
+    expect(
+      screen
+        .getByRole('button', { name: 'Copy shot ID' })
+        .hasAttribute('disabled'),
+    ).toBe(true);
   });
 });

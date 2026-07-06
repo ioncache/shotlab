@@ -28,11 +28,15 @@ export function resolveMachineAssetUrl(
 }
 
 export function formatGrams(value: number | null): string {
-  return value === null ? 'Unavailable' : `${value} g`;
+  return formatUnit(value, 'g');
+}
+
+export function formatCelsius(value: number | null): string {
+  return formatUnit(value, 'C');
 }
 
 export function formatSeconds(value: number | null): string {
-  return value === null ? 'Unavailable' : `${value} s`;
+  return formatUnit(value, 's');
 }
 
 export function readSourceEmptyText(source: ChartSource): string {
@@ -41,4 +45,10 @@ export function readSourceEmptyText(source: ChartSource): string {
 
 export function readSourceLabel(source: ChartSource): string {
   return source === 'live' ? 'Live brew' : 'Selected shot';
+}
+
+function formatUnit(value: number | null, unit: string): string {
+  return value === null || value === undefined
+    ? 'Unavailable'
+    : `${value.toFixed(2)} ${unit}`;
 }

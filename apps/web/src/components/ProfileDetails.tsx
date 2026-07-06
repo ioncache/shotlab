@@ -4,6 +4,7 @@ import {
   readProfileDescription,
   readProfileName,
 } from '../lib/profile-display';
+import { formatCelsius, formatGrams } from '../lib/dashboard-display';
 import { Metric } from './Metric';
 
 interface ProfileDetailsProps {
@@ -36,11 +37,11 @@ export function ProfileDetails(props: ProfileDetailsProps) {
       >
         <Metric
           label="Temperature"
-          value={temperature === undefined ? '0 C' : `${temperature} C`}
+          value={temperature === undefined ? '—' : formatCelsius(temperature)}
         />
         <Metric
           label="Yield"
-          value={finalWeight === undefined ? '0 g' : `${finalWeight} g`}
+          value={finalWeight === undefined ? '—' : formatGrams(finalWeight)}
         />
         <Metric label="Stages" value={String(stageCount)} />
         <Metric label="Variables" value={String(variableCount)} />

@@ -35,7 +35,7 @@ export function ProfileCarousel(props: ProfileCarouselProps) {
       ),
     [props.activeProfileId, props.profiles],
   );
-  const canLoop = props.profiles.length > 2;
+  const canLoop = props.profiles.length > 3;
 
   useEffect(() => {
     if (!swiperRef.current || activeProfileIndex < 0) {
@@ -134,14 +134,14 @@ export function ProfileCarousel(props: ProfileCarouselProps) {
         spaceBetween={12}
         style={{ height: '100%' }}
       >
-        {props.profiles.map((profile) => {
+        {props.profiles.map((profile, index) => {
           const profileId = readProfileId(profile) ?? readProfileName(profile);
           const profileName = readProfileName(profile);
           const isActive = profileId === props.activeProfileId;
           const profileImage = readProfileImage(profile);
 
           return (
-            <SwiperSlide key={profileId}>
+            <SwiperSlide key={`${profileId ?? 'profile'}-${index}`}>
               <ButtonBase
                 aria-label={`Select ${profileName} profile`}
                 disabled={props.isLocked}

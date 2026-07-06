@@ -15,8 +15,7 @@ describe('ProfileDetails', () => {
     expect(
       screen.getByRole('heading', { level: 6, name: 'No profile selected' }),
     ).toBeDefined();
-    expect(screen.getByText('0 C')).toBeDefined();
-    expect(screen.getByText('0 g')).toBeDefined();
+    expect(screen.getAllByText('—')).toHaveLength(2);
   });
 
   it('renders profile metrics from the selected profile', () => {
@@ -37,8 +36,8 @@ describe('ProfileDetails', () => {
       screen.getByRole('heading', { level: 6, name: 'Night Espresso' }),
     ).toBeDefined();
     expect(screen.getByText('Long, syrupy profile.')).toBeDefined();
-    expect(screen.getByText('94 C')).toBeDefined();
-    expect(screen.getByText('36 g')).toBeDefined();
+    expect(screen.getByText('94.00 C')).toBeDefined();
+    expect(screen.getByText('36.00 g')).toBeDefined();
     expect(screen.getByText('Stages')).toBeDefined();
     expect(screen.getByText('Variables')).toBeDefined();
   });

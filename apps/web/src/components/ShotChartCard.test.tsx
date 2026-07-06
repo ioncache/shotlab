@@ -140,19 +140,19 @@ describe('ShotChartCard', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Play' }));
 
-    expect(screen.getByText('0 s')).toBeDefined();
+    expect(screen.getByText('0.00 s')).toBeDefined();
 
     act(() => {
       vi.advanceTimersByTime(160);
     });
 
-    expect(screen.getByText('0.1 s')).toBeDefined();
+    expect(screen.getByText('0.10 s')).toBeDefined();
 
     act(() => {
       vi.advanceTimersByTime(120);
     });
 
-    expect(screen.getByText('0.2 s')).toBeDefined();
+    expect(screen.getByText('0.20 s')).toBeDefined();
     expect(screen.getByRole('button', { name: 'Play' })).toBeDefined();
   });
 
@@ -170,7 +170,7 @@ describe('ShotChartCard', () => {
 
     fireEvent.change(screen.getByRole('slider'), { target: { value: '1' } });
 
-    expect(screen.getByText('10 g')).toBeDefined();
+    expect(screen.getByText('10.00 g')).toBeDefined();
   });
 
   it('stops replay and resets to the end state when the selected shot changes', () => {
@@ -186,7 +186,7 @@ describe('ShotChartCard', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Start' }));
-    expect(screen.getByText('0 s')).toBeDefined();
+    expect(screen.getByText('0.00 s')).toBeDefined();
 
     rerender(
       <ShotChartCard
@@ -211,7 +211,58 @@ describe('ShotChartCard', () => {
       />,
     );
 
-    expect(screen.getByText('0.4 s')).toBeDefined();
+    expect(screen.getByText('0.40 s')).toBeDefined();
     expect(screen.getByRole('button', { name: 'Play' })).toBeDefined();
+  });
+
+  it('keeps live shots pointed at the latest point as telemetry extends the same id', () => {
+    const { rerender } = render(
+      <ShotChartCard
+        activeSource="live"
+        isMachineLoading={false}
+        isShotLoading={false}
+        machineStateLabel="brewing"
+        onSourceChange={() => undefined}
+        shot={{
+          ...shot,
+          id: 'live-shot:1',
+          points: [shot.points[0]],
+          source: 'live',
+          yieldGrams: 0,
+        }}
+      />,
+    );
+
+    expect(screen.getByText('0.00 g')).toBeDefined();
+
+    rerender(
+      <ShotChartCard
+        activeSource="live"
+        isMachineLoading={false}
+        isShotLoading={false}
+        machineStateLabel="brewing"
+        onSourceChange={() => undefined}
+        shot={{
+          ...shot,
+          id: 'live-shot:1',
+          points: [
+            shot.points[0],
+            {
+              ...shot.points[0],
+              flow: 2.4,
+              gravimetricFlow: 2.1,
+              pressure: 9.1,
+              second: 1,
+              weight: 10,
+            },
+          ],
+          source: 'live',
+          yieldGrams: 10,
+        }}
+      />,
+    );
+
+    expect(screen.getByText('10.00 g')).toBeDefined();
+    expect(screen.getByText('1.00 s')).toBeDefined();
   });
 });

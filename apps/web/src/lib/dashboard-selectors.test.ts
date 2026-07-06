@@ -33,9 +33,9 @@ describe('selectLiveCards', () => {
         {},
       ),
     ).toEqual([
-      { label: 'Temperature', value: '93.4 C' },
+      { label: 'Temperature', value: '93.40 C' },
       { label: 'Machine status', value: 'Idle' },
-      { label: 'Weight', value: '0.2 g' },
+      { label: 'Weight', value: '0.20 g' },
       { label: 'Last loaded profile', value: 'Filter Bright 1' },
     ]);
   });

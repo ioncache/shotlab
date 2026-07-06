@@ -51,7 +51,7 @@ const shot: DashboardShot = {
 describe('buildShotChartSummary', () => {
   it('formats the chart title and subtitle from the selected shot', () => {
     expect(buildShotChartSummary(shot)).toEqual({
-      subtitle: '21.684 s • 51.37 g',
+      subtitle: '21.68 s • 51.37 g',
       title: 'Low Contact • 2026-06-28 11:59',
     });
   });
@@ -132,6 +132,24 @@ describe('replay timing helpers', () => {
     expect(selectShotReplayPointIndex(sparseShot, 17999)).toBe(1);
     expect(selectShotReplayPointIndex(sparseShot, 18000)).toBe(2);
   });
+
+  it('falls back to the recorded span when the declared duration is zero', () => {
+    const zeroDurationShot: DashboardShot = {
+      ...shot,
+      durationSeconds: 0,
+      points: [
+        { ...shot.points[0], second: 0 },
+        { ...shot.points[1], second: 1 },
+        { ...shot.points[2], second: 3 },
+      ],
+    };
+
+    expect(readShotReplayDurationMs(zeroDurationShot)).toBe(3000);
+    expect(readShotReplayElapsedMs(zeroDurationShot, 1)).toBe(1000);
+    expect(selectShotReplayPointIndex(zeroDurationShot, 999)).toBe(0);
+    expect(selectShotReplayPointIndex(zeroDurationShot, 1000)).toBe(1);
+    expect(selectShotReplayPointIndex(zeroDurationShot, 3000)).toBe(2);
+  });
 });
 
 describe('getShotPointDetails', () => {
@@ -143,7 +161,7 @@ describe('getShotPointDetails', () => {
         { label: 'Grav. flow', value: '3.22 g/s' },
         { label: 'Weight', value: '27.51 g' },
       ],
-      time: '9.573 s',
+      time: '9.57 s',
     });
   });
 });

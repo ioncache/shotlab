@@ -46,4 +46,19 @@ describe('selectProfileBrowserState', () => {
     expect(state.isBrewing).toBe(true);
     expect(state.activeProfile?.id).toBe('espresso');
   });
+
+  it('falls back to the first ordered profile while brewing when no active reference exists', () => {
+    const state = selectProfileBrowserState({
+      lastProfile: {},
+      machine: {
+        state: 'brewing',
+      },
+      profiles,
+      selectedProfileId: 'milk',
+      settings: { profile_order: ['filter', 'espresso', 'milk'] },
+    });
+
+    expect(state.isBrewing).toBe(true);
+    expect(state.activeProfile?.id).toBe('filter');
+  });
 });

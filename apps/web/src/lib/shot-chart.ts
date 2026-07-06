@@ -188,7 +188,7 @@ function formatSeconds(value: number | null): string {
 function formatUnit(value: number | null, unit: string): string {
   return value === null || value === undefined
     ? 'Unavailable'
-    : `${value} ${unit}`;
+    : `${value.toFixed(2)} ${unit}`;
 }
 
 function readShotReplayScale(shot: DashboardShot): number {
@@ -198,6 +198,7 @@ function readShotReplayScale(shot: DashboardShot): number {
   if (
     shot.durationSeconds === null ||
     shot.durationSeconds === undefined ||
+    shot.durationSeconds <= 0 ||
     firstSecond === undefined ||
     lastSecond === undefined
   ) {

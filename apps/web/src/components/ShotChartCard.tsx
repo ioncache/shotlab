@@ -60,7 +60,9 @@ export function ShotChartCard(props: ShotChartCardProps) {
 
   useEffect(() => {
     setDisplayedPointIndex(
-      props.shot ? selectShotPointIndex(props.shot) : undefined,
+      props.shot?.source === 'history'
+        ? selectShotPointIndex(props.shot)
+        : undefined,
     );
     setHoveredPointIndex(undefined);
     setIsReplayPlaying(false);
@@ -186,7 +188,6 @@ export function ShotChartCard(props: ShotChartCardProps) {
       }
     };
   }, [
-    displayedChartPointIndex,
     isReplayAvailable,
     isReplayPlaying,
     props.shot,

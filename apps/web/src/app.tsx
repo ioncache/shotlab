@@ -546,6 +546,10 @@ export function App() {
       setSelectedProfileId(nextProfileId);
     }
 
+    if (profiles.length === 0) {
+      return;
+    }
+
     lastSyncedHistoryShotIdRef.current = selectedShotId;
   }, [
     activeChartSource,

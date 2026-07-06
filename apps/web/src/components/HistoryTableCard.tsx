@@ -57,8 +57,16 @@ export function HistoryTableCard(props: HistoryTableCardProps) {
                       hover
                       key={shot.id}
                       onClick={() => props.onSelectShot(shot.id)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          props.onSelectShot(shot.id);
+                        }
+                      }}
                       selected={isSelected}
+                      aria-selected={isSelected}
                       sx={{ cursor: 'pointer' }}
+                      tabIndex={0}
                     >
                       <TableCell>
                         {shot.profileImage ? (

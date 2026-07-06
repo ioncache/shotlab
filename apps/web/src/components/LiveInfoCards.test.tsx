@@ -5,9 +5,9 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { LiveInfoCards } from './LiveInfoCards';
 
 const liveCards = [
-  { label: 'Temperature', value: '93.4 C' },
+  { label: 'Temperature', value: '93.40 C' },
   { label: 'Machine status', value: 'Idle' },
-  { label: 'Weight', value: '0.2 g' },
+  { label: 'Weight', value: '0.20 g' },
   { label: 'Last loaded profile', value: 'Bloom' },
 ];
 
@@ -29,9 +29,9 @@ describe('LiveInfoCards', () => {
       />,
     );
 
-    expect(screen.getByText('93.4 C')).toBeDefined();
+    expect(screen.getByText('93.40 C')).toBeDefined();
     expect(screen.getByText('Idle')).toBeDefined();
-    expect(screen.getByText('0.2 g')).toBeDefined();
+    expect(screen.getByText('0.20 g')).toBeDefined();
     expect(screen.getByText('Bloom')).toBeDefined();
   });
 
@@ -48,9 +48,9 @@ describe('LiveInfoCards', () => {
       />,
     );
 
-    expect(screen.queryByText('93.4 C')).toBeNull();
+    expect(screen.queryByText('93.40 C')).toBeNull();
     expect(screen.queryByText('Idle')).toBeNull();
-    expect(screen.queryByText('0.2 g')).toBeNull();
+    expect(screen.queryByText('0.20 g')).toBeNull();
     expect(screen.getByText('Bloom')).toBeDefined();
   });
 });

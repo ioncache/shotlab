@@ -139,26 +139,35 @@ export function readIsBrewing(machine: JsonObject): boolean {
   );
 }
 
+function readProfileReference(
+  machine: JsonObject,
+  lastProfile: LastProfileResponse,
+  priority: 'active' | 'loaded',
+): string | undefined {
+  const machineReference =
+    priority === 'active'
+      ? readString(machine.profile, machine.loaded_profile)
+      : readString(machine.loaded_profile, machine.profile);
+
+  return (
+    machineReference ??
+    readProfileId(lastProfile.profile) ??
+    readString(lastProfile.profile?.name)
+  );
+}
+
 function readActiveBrewProfileReference(
   machine: JsonObject,
   lastProfile: LastProfileResponse,
 ): string | undefined {
-  return (
-    readString(machine.profile, machine.loaded_profile) ??
-    readProfileId(lastProfile.profile) ??
-    readString(lastProfile.profile?.name)
-  );
+  return readProfileReference(machine, lastProfile, 'active');
 }
 
 function readLoadedProfileReference(
   machine: JsonObject,
   lastProfile: LastProfileResponse,
 ): string | undefined {
-  return (
-    readString(machine.loaded_profile, machine.profile) ??
-    readProfileId(lastProfile.profile) ??
-    readString(lastProfile.profile?.name)
-  );
+  return readProfileReference(machine, lastProfile, 'loaded');
 }
 
 function findProfileByReference(

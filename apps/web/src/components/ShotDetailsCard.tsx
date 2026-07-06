@@ -35,7 +35,7 @@ interface ShotDetailsCardProps {
 }
 
 export function ShotDetailsCard(props: ShotDetailsCardProps) {
-  const shotId = props.selectedShot?.id ?? '0';
+  const shotId = props.selectedShot?.id;
 
   return (
     <Card>
@@ -77,7 +77,7 @@ export function ShotDetailsCard(props: ShotDetailsCardProps) {
                 >
                   {props.selectedShot?.profileImage ? (
                     <Box
-                      alt={`${props.selectedShot.profile} detail profile image`}
+                      alt={`${props.selectedShot.profile} selected profile image`}
                       component="img"
                       src={resolveMachineAssetUrl(
                         props.machineBaseUrl,
@@ -161,7 +161,7 @@ export function ShotDetailsCard(props: ShotDetailsCardProps) {
                       title={shotId}
                       variant="body1"
                     >
-                      {shotId}
+                      {shotId ?? '—'}
                     </Typography>
                   </ButtonBase>
                 </Stack>

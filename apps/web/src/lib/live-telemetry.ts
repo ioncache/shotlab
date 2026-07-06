@@ -382,7 +382,10 @@ function resolveLiveProfile(
       normalize(statusReference) === normalize(profileName));
 
   return {
-    id: (matchesLastProfile ? profileId : undefined) ?? liveShot?.profileId,
+    id:
+      (matchesLastProfile || statusReference === undefined
+        ? profileId
+        : undefined) ?? liveShot?.profileId,
     image:
       (matchesLastProfile || statusReference === undefined
         ? profileImage

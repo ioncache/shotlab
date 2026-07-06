@@ -12,6 +12,7 @@ const shot = {
   points: [],
   profile: 'Bright Filter',
   profileImage: '/profiles/bright.png',
+  source: 'history' as const,
   yieldGrams: 36,
 };
 
@@ -59,5 +60,27 @@ describe('HistoryTableCard', () => {
     expect(
       screen.getByText('No history rows have been mapped yet.'),
     ).toBeDefined();
+  });
+
+  it('selects a shot from the keyboard and exposes selected state', () => {
+    const onSelectShot = vi.fn();
+
+    render(
+      <HistoryTableCard
+        historyLoading={false}
+        onSelectShot={onSelectShot}
+        selectedShotId="shot-1"
+        shots={[shot]}
+      />,
+    );
+
+    const row = screen.getByRole('row', {
+      name: /Bright Filter/,
+      selected: true,
+    });
+
+    fireEvent.keyDown(row, { key: 'Enter' });
+
+    expect(onSelectShot).toHaveBeenCalledWith('shot-1');
   });
 });

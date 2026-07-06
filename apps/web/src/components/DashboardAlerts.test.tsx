@@ -22,4 +22,19 @@ describe('DashboardAlerts', () => {
       screen.getByText('Machine: Failed to load machine data.'),
     ).toBeDefined();
   });
+
+  it('renders duplicate load errors without collapsing them', () => {
+    render(
+      <DashboardAlerts
+        loadErrors={[
+          'Machine: Failed to load machine data.',
+          'Machine: Failed to load machine data.',
+        ]}
+      />,
+    );
+
+    expect(
+      screen.getAllByText('Machine: Failed to load machine data.'),
+    ).toHaveLength(2);
+  });
 });

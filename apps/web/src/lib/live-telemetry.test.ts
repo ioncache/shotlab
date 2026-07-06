@@ -50,8 +50,10 @@ describe('applyLiveSocketEvent', () => {
         event: 'status',
         payload: [
           {
+            extracting: true,
             profile_time: 9.2,
             sensors: { p: 7.9, t: 91.4, w: 15.3 },
+            state: 'brewing',
             time: 22.4,
           },
         ],
@@ -91,10 +93,10 @@ describe('applyLiveSocketEvent', () => {
         payload: [
           {
             name: 'Idle',
-            state: 'idle',
-            status: 'Idle',
             profile_time: 6903,
             sensors: { p: 0.35, t: 92.4, w: 7.6 },
+            state: 'idle',
+            status: 'Idle',
             time: 0,
           },
         ],
@@ -167,5 +169,50 @@ describe('applyLiveSocketEvent', () => {
     });
 
     expect(nextState.liveShot?.brewedAt).toBe('Live brew');
+  });
+
+  it('updates the live shot profile id from a later profile load event', () => {
+    const nextState = applyLiveSocketEvent({
+      event: {
+        event: 'profile',
+        payload: [{ change: 'load', profile_id: 'new-profile' }],
+      },
+      lastProfile: {
+        profile: {
+          display: { image: '/profiles/new.png' },
+          id: 'old-profile',
+          name: 'New profile',
+        },
+      },
+      liveShot: {
+        brewedAt: 'Live brew',
+        doseGrams: null,
+        durationSeconds: 1,
+        id: 'live-shot',
+        points: [
+          {
+            flow: 1,
+            gravimetricFlow: 1,
+            pressure: 8,
+            second: 1,
+            temperatureCelsius: 93,
+            weight: 10,
+          },
+        ],
+        profile: 'Old profile',
+        profileId: 'old-profile',
+        profileImage: '/profiles/old.png',
+        source: 'live',
+        yieldGrams: 10,
+      },
+      machine: {},
+      settings: {},
+    });
+
+    expect(nextState.liveShot).toMatchObject({
+      profile: 'New profile',
+      profileId: 'new-profile',
+      profileImage: '/profiles/new.png',
+    });
   });
 });

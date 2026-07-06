@@ -121,9 +121,9 @@ describe('App', () => {
       weight: 0.2,
     });
 
-    await screen.findByText('93.4 C');
+    await screen.findByText('93.40 C');
     expect(screen.getAllByText('Idle')).toHaveLength(2);
-    expect(screen.getByText('0.2 g')).toBeDefined();
+    expect(screen.getByText('0.20 g')).toBeDefined();
     expect(screen.queryByText('Bloom')).toBeNull();
 
     mocks.deferreds.lastProfile.resolve({ profile: { title: 'Bloom' } });
@@ -242,9 +242,13 @@ describe('App', () => {
 
     expect(
       screen
-        .getByRole('img', { name: 'Bright Filter selected profile image' })
-        .getAttribute('src'),
-    ).toBe('http://machine.local:8080/profiles/bright.png');
+        .getAllByRole('img', { name: 'Bright Filter selected profile image' })
+        .every(
+          (image) =>
+            image.getAttribute('src') ===
+            'http://machine.local:8080/profiles/bright.png',
+        ),
+    ).toBe(true);
   });
 
   it('does not auto-load the first history shot into the main chart', async () => {
@@ -360,14 +364,14 @@ describe('App', () => {
 
     await screen.findByRole('heading', { level: 6, name: 'Filter Day' });
     expect(screen.getByRole('button', { name: 'Load profile' })).toBeDefined();
-    expect(screen.getByText('92 C')).toBeDefined();
+    expect(screen.getByText('92.00 C')).toBeDefined();
 
     fireEvent.click(
       screen.getByRole('button', { name: 'Select Night Espresso profile' }),
     );
 
     await screen.findByRole('heading', { level: 6, name: 'Night Espresso' });
-    expect(screen.getByText('36 g')).toBeDefined();
+    expect(screen.getByText('36.00 g')).toBeDefined();
   });
 
   it('locks the profiles card to the brewing profile during a live brew', async () => {
@@ -483,6 +487,89 @@ describe('App', () => {
     expect(
       screen.getAllByRole('heading', { level: 6, name: 'Night Espresso' }),
     ).toHaveLength(1);
+  });
+
+  it('syncs the selected history shot profile after profiles finish loading', async () => {
+    const profilesDeferred = createDeferred([
+      {
+        final_weight: 20,
+        id: 'filter',
+        name: 'Filter Day',
+        stages: [{ name: 'Bloom' }],
+        temperature: 92,
+        variables: [{ key: 'grind' }],
+      },
+      {
+        final_weight: 36,
+        id: 'espresso',
+        name: 'Night Espresso',
+        stages: [{ name: 'Ramp' }, { name: 'Hold' }],
+        temperature: 94,
+        variables: [{ key: 'dose' }, { key: 'yield' }],
+      },
+    ]);
+    mocks.client.listProfiles.mockReturnValue(profilesDeferred.promise);
+
+    render(<App />);
+
+    mocks.deferreds.machine.resolve({
+      state: 'Idle',
+      water_temperature: 93.4,
+      weight: 0.2,
+    });
+    mocks.deferreds.lastProfile.resolve({
+      profile: { id: 'filter', name: 'Filter Day' },
+    });
+    mocks.deferreds.settings.resolve({ heating_timeout: 10 });
+    mocks.deferreds.history.resolve({
+      history: [
+        {
+          id: 'shot-1',
+          profile: {
+            id: 'espresso',
+            name: 'Night Espresso',
+          },
+          timestamp: '2026-06-28T11:12:13.000Z',
+          weights: [0, 2.5, 7.9],
+        },
+      ],
+    });
+
+    await screen.findAllByText('No brew in process...');
+
+    fireEvent.click(screen.getByRole('row', { name: /Night Espresso/ }));
+    expect(
+      screen.getByRole('heading', { level: 6, name: 'Night Espresso' }),
+    ).toBeDefined();
+
+    await act(async () => {
+      profilesDeferred.resolve([
+        {
+          final_weight: 20,
+          id: 'filter',
+          name: 'Filter Day',
+          stages: [{ name: 'Bloom' }],
+          temperature: 92,
+          variables: [{ key: 'grind' }],
+        },
+        {
+          final_weight: 36,
+          id: 'espresso',
+          name: 'Night Espresso',
+          stages: [{ name: 'Ramp' }, { name: 'Hold' }],
+          temperature: 94,
+          variables: [{ key: 'dose' }, { key: 'yield' }],
+        },
+      ]);
+      await Promise.resolve();
+    });
+
+    expect(
+      await screen.findAllByRole('heading', {
+        level: 6,
+        name: 'Night Espresso',
+      }),
+    ).toHaveLength(2);
   });
 
   it('reselects the displayed shot profile when the selected shot header is clicked', async () => {
